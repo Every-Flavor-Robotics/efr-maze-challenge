@@ -2,7 +2,9 @@
 
 import argparse
 import os
+import random
 import sys
+import time
 from typing import List, Tuple
 
 from labyrinth.generate import (
@@ -14,6 +16,8 @@ from labyrinth.generate import (
 from labyrinth.maze import Maze
 from labyrinth.solve import MazeSolver
 from labyrinth.ui import MazeApp, SizeCategory
+
+from maze_interface import MazeInterface
 
 
 class LabyrinthMain:
@@ -142,11 +146,31 @@ def main() -> None:
 
     solve = True
 
-    maze = Maze(10, 10, generator=KruskalsGenerator())
-    if solve:
-        solver = MazeSolver()
-        maze.path = solver.solve(maze)
-    print(maze)
+    maze_interface = MazeInterface(10, 10)
+
+    maze_interface.draw()
+
+    for _ in range(1500):
+        # Get the current position of the agent
+        position = maze_interface.get_position()
+
+        possible_moves = maze_interface.get_possible_moves()
+
+        # Sample a random direction to move
+        direction = random.choice(
+            [d for d, can_move in possible_moves.items() if can_move]
+        )
+
+        maze_interface.move(direction)
+
+        maze_interface.draw()
+
+        if maze_interface.completed():
+            break
+
+        time.sleep(0.01)
+
+    maze_interface.print_final_stats()
 
 
 if __name__ == "__main__":
