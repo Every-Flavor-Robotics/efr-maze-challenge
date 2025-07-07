@@ -129,8 +129,8 @@ class MazeInterface:
         ──────────────
         🤖 Robot Position: {self.agent_position.coordinates}
         🔸 Visited Cells: {len(self.visited_cells)} / {self.width * self.height}
-        🏆 Goal Reached: {"Yes" if self.goal_reached else "No"}
         📦 Total Moves: {self.num_moves}
+        🏆 Goal Reached: {"Yes" if self.goal_reached else "No"}
 
         📋  Maze Stats
         ──────────────
