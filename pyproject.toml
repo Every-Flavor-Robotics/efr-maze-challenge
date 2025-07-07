@@ -1,0 +1,9 @@
+[project]
+name = "efr-maze-challenge"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "labyrinth-py>=1.0.4",
+]

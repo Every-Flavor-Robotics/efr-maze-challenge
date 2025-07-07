@@ -1,0 +1,23 @@
+version = 1
+revision = 1
+requires-python = ">=3.12"
+
+[[package]]
+name = "efr-maze-challenge"
+version = "0.1.0"
+source = { virtual = "." }
+dependencies = [
+    { name = "labyrinth-py" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "labyrinth-py", specifier = ">=1.0.4" }]
+
+[[package]]
+name = "labyrinth-py"
+version = "1.0.4"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/a3/a4/6728bbe013a9fbc50bff71f84e80b61306af3dc3dd663d09d07065623694/labyrinth_py-1.0.4.tar.gz", hash = "sha256:73102aca9d004ac31322cf06944c0069985679dc463feafdd8e48861068dc131", size = 23980 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/53/8d/b7482a511dc1611cffc6b093652fc3de1a206ecb4bd4d347817db5589caa/labyrinth_py-1.0.4-py3-none-any.whl", hash = "sha256:1a2ab0fa1a4fcc2e6f7703d0d3dcba13336a0897e0f88902beba285846f399fe", size = 27270 },
+]
