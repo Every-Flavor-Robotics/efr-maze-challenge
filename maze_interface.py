@@ -1,23 +1,17 @@
 import os
 import platform
 
-from labyrinth.generate import (
-    KruskalsGenerator,
-)
+from labyrinth.generate import KruskalsGenerator
 from labyrinth.maze import Cell, Direction, Maze
+
+from dijkstra import (  # Assuming dijkstra.py is in the same directory
+    dijkstra,
+    manhattan_distance,
+)
 
 
 def clear_screen():
     os.system("cls" if platform.system() == "Windows" else "clear")
-
-
-def manhattan_distance(cell1: Cell, cell2: Cell) -> int:
-    """Calculate the Manhattan distance between two coordinates."""
-
-    coord1 = cell1.coordinates
-    coord2 = cell2.coordinates
-
-    return abs(coord1[0] - coord2[0]) + abs(coord1[1] - coord2[1])
 
 
 class MazeInterface:
@@ -30,7 +24,9 @@ class MazeInterface:
 
         self.maze = self._generate()
 
-        breakpoint()
+        self.shortest_path, _ = dijkstra(
+            self.maze, self.maze.start_cell, self.maze.end_cell
+        )
 
         # Position of the agent in the maze
         self.agent_position = self.maze.start_cell
@@ -138,7 +134,7 @@ class MazeInterface:
             stats = f"""
         🧭  Maze Stats
         ──────────────
-        🎯 Score: {self._compute_score()}
+        🎯 Current Score: {self._compute_score()}
         🤖 Robot Position: {self.agent_position.coordinates}
         🔸 Visited Cells: {len(self.visited_cells)} / {self.width * self.height}
         📦 Total Moves: {self.num_moves}
@@ -158,20 +154,32 @@ class MazeInterface:
         # Scoring algorithm:
         # Start with a base score of 10,000 and apply penalties:
         # - 100 * manhattan distance to the goal (ignoring walls)
-        # - 10 points for each move made
+        # - 10 points for each move made more than the shortest path
         # - 1 points for each visited cell (to encourage exploration)
 
         return (
             10000
             - 100 * manhattan_distance(self.agent_position, self.maze.end_cell)
-            - 10 * self.num_moves
+            - max(0, self.num_moves - len(self.shortest_path) - 1)
+            * 10  # Penalize for extra moves
             - len(self.visited_cells)
         )
 
     def print_final_stats(self):
-        """Print the current stats of the maze interface."""
-        print("\nFinal Stats:")
-        print(f"Visited Cells: {len(self.visited_cells)} / {self.width * self.height}")
-        print(f"Total Moves: {self.num_moves}")
-        print(f"Goal Reached: {'Yes' if self.goal_reached else 'No'}")
-        print(f"Score: {self._compute_score()}")
+        """Print the final stats of the maze challenge in a stylized format."""
+
+        shortest_path_length = len(self.shortest_path) - 1  # Exclude the start cell
+        print(
+            f"""
+━━━━━━━━━━━━━━━━━━━━━━━
+🏁  Final Maze Summary
+━━━━━━━━━━━━━━━━━━━━━━━
+🗺️  Cells Visited:     {len(self.visited_cells)} / {self.width * self.height}
+🕹️  Moves Taken:       {self.num_moves} moves
+📏 Shortest Path:      {shortest_path_length} moves
+🏆 Goal Reached:       {'✅ Yes!' if self.goal_reached else '❌ No'}
+
+🎯 Final Score:        {self._compute_score()}
+━━━━━━━━━━━━━━━━━━━━━━━
+"""
+        )
