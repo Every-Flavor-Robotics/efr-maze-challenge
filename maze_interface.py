@@ -1,5 +1,6 @@
 import os
 import platform
+import random
 
 from labyrinth.generate import KruskalsGenerator
 from labyrinth.maze import Cell, Direction, Maze
@@ -33,6 +34,21 @@ class MazeInterface:
 
         self.visited_cells = set()
         self.visited_cells.add(self.agent_position.coordinates)
+
+        # Generate a random cherry location, ensuring it's not the start or end cell
+        while True:
+            cherry_row = random.randint(0, self.height - 1)
+            cherry_column = random.randint(0, self.width - 1)
+            self.cherry_location = (cherry_row, cherry_column)
+
+            if (
+                self.cherry_location != self.maze.start_cell.coordinates
+                and self.cherry_location != self.maze.end_cell.coordinates
+            ):
+                break
+
+        self.cherry_cell = self.maze[self.cherry_location]
+        self.cherry_captured = False
 
         self.num_moves = 0
         self.goal_reached = False
@@ -84,6 +100,11 @@ class MazeInterface:
                 self.goal_reached = True
                 if not self.silent:
                     print("move(): Goal reached!")
+
+            if self.agent_position == self.cherry_cell:
+                self.cherry_captured = True
+                if not self.silent:
+                    print("move(): Cherry captured!")
         else:
             if not self.silent:
                 print(
@@ -106,6 +127,8 @@ class MazeInterface:
             return " 🏆 "
         elif cell.coordinates in self.visited_cells:
             return " 🔸 "
+        elif cell.coordinates == self.cherry_location:
+            return " 🍒 "
         else:
             return " " * cell_width
 
@@ -132,19 +155,21 @@ class MazeInterface:
 
             # Stylized stats display
             stats = f"""
-        🧭  Maze Stats
-        ──────────────
-        🎯 Current Score: {self._compute_score()}
-        🤖 Robot Position: {self.agent_position.coordinates}
-        🔸 Visited Cells: {len(self.visited_cells)} / {self.width * self.height}
-        📦 Total Moves: {self.num_moves}
-        🏆 Goal Reached: {"Yes" if self.goal_reached else "No"}
+                            🧭  Maze Stats
+                            ──────────────
+                            🎯 Current Score: {self._compute_score()}
+                            🤖 Robot Position: {self.agent_position.coordinates}
+                            🔸 Visited Cells: {len(self.visited_cells)} / {self.width * self.height}
+                            📦 Total Moves: {self.num_moves}
+                            🍒 Cherry Captured: {"Yes" if self.cherry_captured else "No"}
 
-        📋  Maze Stats
-        ──────────────
-        📐 Size: {self.width} x {self.height}
-        🏁 Start: {self.maze.start_cell.coordinates}
-        🏆 End:   {self.maze.end_cell.coordinates}
+
+                            📋  Maze Info
+                            ──────────────
+                            📐 Size: {self.width} x {self.height}
+                            🏁 Start: {self.maze.start_cell.coordinates}
+                            🍒 Cherry: {self.cherry_location}
+                            🏆 End:   {self.maze.end_cell.coordinates}
         """
         print(maze_str + stats)
 
@@ -155,13 +180,14 @@ class MazeInterface:
         # Start with a base score of 10,000 and apply penalties:
         # - 100 * manhattan distance to the goal (ignoring walls)
         # - 10 points for each move made more than the shortest path
-        # - 1 points for each visited cell (to encourage exploration)
+        # - 1 points for each visited cell
+        # + 500 points for capturing the cherry
 
         return (
             10000
             - 100 * manhattan_distance(self.agent_position, self.maze.end_cell)
-            - max(0, self.num_moves - len(self.shortest_path) - 1)
-            * 10  # Penalize for extra moves
+            - 10 * max(0, self.num_moves - len(self.shortest_path) - 1)
+            + 500 * self.cherry_captured
             - len(self.visited_cells)
         )
 
@@ -171,15 +197,16 @@ class MazeInterface:
         shortest_path_length = len(self.shortest_path) - 1  # Exclude the start cell
         print(
             f"""
-━━━━━━━━━━━━━━━━━━━━━━━
-🏁  Final Maze Summary
-━━━━━━━━━━━━━━━━━━━━━━━
-🗺️  Cells Visited:     {len(self.visited_cells)} / {self.width * self.height}
-🕹️  Moves Taken:       {self.num_moves} moves
-📏 Shortest Path:      {shortest_path_length} moves
-🏆 Goal Reached:       {'✅ Yes!' if self.goal_reached else '❌ No'}
+                            ━━━━━━━━━━━━━━━━━━━━━━━
+                            🏁  Final Maze Summary
+                            ━━━━━━━━━━━━━━━━━━━━━━━
+                            🗺️  Cells Visited:     {len(self.visited_cells)} / {self.width * self.height}
+                            🕹️  Moves Taken:       {self.num_moves} moves
+                            📏 Shortest Path:      {shortest_path_length} moves
+                            🍒 Cherry Captured:   {'✅ Yes!' if self.cherry_captured else '❌ No'}
+                            🏆 Goal Reached:       {'✅ Yes!' if self.goal_reached else '❌ No'}
 
-🎯 Final Score:        {self._compute_score()}
-━━━━━━━━━━━━━━━━━━━━━━━
+                            🎯 Final Score:        {self._compute_score()}
+                            ━━━━━━━━━━━━━━━━━━━━━━━
 """
         )
