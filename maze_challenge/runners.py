@@ -2,6 +2,7 @@ import importlib.util
 import multiprocessing
 import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
+from pathlib import Path
 
 import click
 from tqdm import tqdm
@@ -31,13 +32,23 @@ def average_stats(stats: list[dict]) -> dict:
     return average
 
 
-def run_solver(solver_class: Solver, fast: bool) -> None:
+def run_solver(solver_class: Solver, fast: bool, maze_file: str = None) -> None:
 
     # Confirm solver is the correct type
     if not issubclass(solver_class, Solver):
         raise TypeError("The solver must be an instance of the Solver class.")
 
-    maze_interface = MazeInterface(WIDTH, HEIGHT)
+    maze_interface = None
+    if maze_file is not None:
+        # Confirm that the maze file exists, this means user is providing a maze file
+        maze_path = Path(maze_file)
+        if not maze_path.exists():
+            raise FileNotFoundError(f"The maze file '{maze_file}' does not exist.")
+
+        maze_interface = MazeInterface.load(maze_path)
+
+    else:
+        maze_interface = MazeInterface(WIDTH, HEIGHT)
 
     sleep = 0.005 if fast else 0.2
 
