@@ -31,7 +31,7 @@ def average_stats(stats: list[dict]) -> dict:
 def run_solver(solver: Solver, fast: bool) -> None:
 
     # Confirm solver is the correct type
-    if not isinstance(solver, Solver):
+    if not issubclass(solver, Solver):
         raise TypeError("The solver must be an instance of the Solver class.")
 
     maze_interface = MazeInterface(WIDTH, HEIGHT)
