@@ -1,5 +1,6 @@
 """Entry point for the labyrinth program."""
 
+import importlib.util
 import multiprocessing
 import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
@@ -8,7 +9,6 @@ import click
 from tqdm import tqdm
 
 from maze_interface import MazeInterface
-from solver import Solver
 
 # Parameters for the competition
 # - Width and height of the maze
@@ -32,12 +32,17 @@ def average_stats(stats: list[dict]) -> dict:
     return average
 
 
-def run_sample() -> None:
+def run_sample(solver: str) -> None:
     """Entry point for the 'labyrinth' and 'maze' programs."""
+
+    # Import the solver dynamically
+    spec = importlib.util.spec_from_file_location("Solver", solver)
+    solver_module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(solver_module)
 
     maze_interface = MazeInterface(WIDTH, HEIGHT, silent=True)
 
-    solver = Solver(maze_interface.width, maze_interface.height)
+    solver = solver_module.Solver(maze_interface.width, maze_interface.height)
 
     for _ in range(MAX_MOVES):
         # Get the current position of the agent
@@ -55,15 +60,48 @@ def run_sample() -> None:
     return maze_interface.get_stats()
 
 
-def main():
-    print("🏁 Running Maze Solver on 10,000 Mazes in Parallel...\n")
-
+@click.command()
+@click.option(
+    "--solver",
+    help="Name of the file containing the solver to test.",
+    default="solver.py",
+)
+def main(solver: str):
     stats = []
-    n = 10000
+    n = 20000
     start = time.time()
 
+    print(f"🏁 Running Maze Solver for {n} mazes...")
+
+    # Append .py to the solver if not already present
+    solver_module_path = solver if solver.endswith(".py") else f"{solver}.py"
+
+    # Confirm the file exists
+    try:
+        with open(solver_module_path, "r") as f:
+            pass
+    except FileNotFoundError:
+        print(f"❌ Error: The solver file '{solver_module_path}' does not exist.")
+        return
+
+    try:
+        spec = importlib.util.spec_from_file_location(
+            "solver_module", solver_module_path
+        )
+        solver_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(solver_module)
+    except (FileNotFoundError, AttributeError, ImportError, SyntaxError) as e:
+        print(f"❌ Error loading solver module '{solver_module_path}': {e}")
+        return
+
+    if not hasattr(solver_module, "Solver"):
+        print(
+            f"❌ Error: The solver module '{solver_module_path}' does not define a Solver class."
+        )
+        return
+
     with ProcessPoolExecutor(max_workers=multiprocessing.cpu_count()) as executor:
-        futures = [executor.submit(run_sample) for _ in range(n)]
+        futures = [executor.submit(run_sample, solver_module_path) for _ in range(n)]
 
         for f in tqdm(
             as_completed(futures), total=n, desc="Running Samples", unit="sample"
