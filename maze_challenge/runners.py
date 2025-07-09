@@ -62,6 +62,9 @@ def run_solver(solver_class: Solver, fast: bool, maze_file: str = None) -> None:
 
         direction = solver.choose_move(position, cherry_position, possible_moves)
 
+        if direction == "":
+            break
+
         maze_interface.move(direction)
 
         maze_interface.draw()
@@ -102,6 +105,9 @@ def run_sample(solver_class: Solver) -> None:
         possible_moves = maze_interface.get_possible_moves()
 
         direction = solver.choose_move(position, possible_moves)
+
+        if direction == "":
+            break
 
         maze_interface.move(direction)
 
