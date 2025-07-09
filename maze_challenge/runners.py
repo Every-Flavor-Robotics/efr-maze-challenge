@@ -27,7 +27,7 @@ def average_stats(stats: list[dict]) -> dict:
     return average
 
 
-def run_solver(solver: str, fast: bool) -> None
+def run_solver(solver: str, fast: bool) -> None:
 
     maze_interface = MazeInterface(WIDTH, HEIGHT)
     # maze_interface.export("maze")
