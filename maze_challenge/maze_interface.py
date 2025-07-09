@@ -5,7 +5,7 @@ import random
 from pathlib import Path
 
 from labyrinth.generate import KruskalsGenerator
-from labyrinth.maze import Cell, Direction, Maze
+from labyrinth.maze import Direction, Maze
 
 from maze_challenge.dijkstra import (  # Assuming dijkstra.py is in the same directory
     dijkstra,
@@ -88,12 +88,20 @@ class MazeInterface:
     def get_possible_moves(self):
         moves = self.agent_position.open_walls
 
-        return {
-            "NORTH": Direction.N in moves,
-            "SOUTH": Direction.S in moves,
-            "EAST": Direction.E in moves,
-            "WEST": Direction.W in moves,
+        # moves is a set
+        if not moves:
+            return {}
+
+        output = {
+            key.name: (
+                self.agent_position.coordinates[0] + key.value[1],
+                self.agent_position.coordinates[1] + key.value[0],
+            )
+            for key in moves
         }
+
+        # breakpoint()
+        return output
 
     def completed(self):
         """Check if the agent has reached the goal."""
@@ -104,10 +112,10 @@ class MazeInterface:
 
         # Map from string to Direction enum
         direction_map = {
-            "NORTH": Direction.N,
-            "SOUTH": Direction.S,
-            "EAST": Direction.E,
-            "WEST": Direction.W,
+            "N": Direction.N,
+            "S": Direction.S,
+            "E": Direction.E,
+            "W": Direction.W,
         }
         if direction not in direction_map:
             raise ValueError(f"Invalid direction: {direction}")
@@ -244,8 +252,8 @@ class MazeInterface:
                             🗺️  Cells Visited:     {len(self.visited_cells)} / {self.width * self.height}
                             🕹️  Moves Taken:       {self.num_moves} moves
                             📏 Shortest Path:      {shortest_path_length} moves
-                            🍒 Cherry Captured:    {'✅ Yes!' if self.cherry_captured else '❌ No'}
-                            🏆 Goal Reached:       {'✅ Yes!' if self.goal_reached else '❌ No'}
+                            🍒 Cherry Captured:    {"✅ Yes!" if self.cherry_captured else "❌ No"}
+                            🏆 Goal Reached:       {"✅ Yes!" if self.goal_reached else "❌ No"}
 
                             ━━━━━━━━━━━━━━━━━━━━━━━
                             🎯 Efficiency Score:   {self._compute_score()}
