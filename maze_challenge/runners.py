@@ -1,7 +1,10 @@
 import importlib.util
+import multiprocessing
 import time
+from concurrent.futures import ProcessPoolExecutor, as_completed
 
 import click
+from tqdm import tqdm
 
 from .maze_interface import MazeInterface
 from .solver import Solver
@@ -28,7 +31,7 @@ def average_stats(stats: list[dict]) -> dict:
     return average
 
 
-def run_solver(solver: Solver, fast: bool) -> None:
+def run_solver(solver_class: Solver, fast: bool) -> None:
 
     # Confirm solver is the correct type
     if not issubclass(solver, Solver):
@@ -38,7 +41,7 @@ def run_solver(solver: Solver, fast: bool) -> None:
 
     sleep = 0.005 if fast else 0.2
 
-    solver = solver(maze_interface.width, maze_interface.height)
+    solver = solver_class(maze_interface.width, maze_interface.height)
 
     for _ in range(MAX_MOVES):
         # Get the current position of the agent
@@ -58,28 +61,99 @@ def run_solver(solver: Solver, fast: bool) -> None:
         time.sleep(sleep)
 
     maze_interface.print_final_stats()
-    maze_interface.export_stats("stats.json")
 
 
-@click.command()
-@click.option(
-    "--solver",
-    type=click.Path(),
-    help="Path to the solver module to use.",
-    default="solver.py",
-)
-@click.option(
-    "--fast",
-    is_flag=True,
-    help="Run the maze solver in fast mode (speed up animation).",
-    default=False,
-)
-def main(solver, fast) -> None:
+def average_stats(stats: list[dict]) -> dict:
+    """Calculate the average of the stats from multiple runs."""
+    if not stats:
+        return {}
+
+    total = {key: 0 for key in stats[0].keys()}
+    for stat in stats:
+        for key, value in stat.items():
+            total[key] += value
+
+    average = {key: value / len(stats) for key, value in total.items()}
+    return average
+
+
+def run_sample(solver_class: Solver) -> None:
     """Entry point for the 'labyrinth' and 'maze' programs."""
 
-    run_maze(solver, fast)
+    maze_interface = MazeInterface(WIDTH, HEIGHT, silent=True)
+
+    solver = solver_class(maze_interface.width, maze_interface.height)
+
+    for _ in range(MAX_MOVES):
+        # Get the current position of the agent
+        position = maze_interface.get_position()
+
+        possible_moves = maze_interface.get_possible_moves()
+
+        direction = solver.choose_move(position, possible_moves)
+
+        maze_interface.move(direction)
+
+        if maze_interface.completed():
+            break
+
+    return maze_interface.get_stats()
+
+
+def evaluate_solver(solver: Solver) -> None:
+
+    # Confirm solver is the correct type
+    if not issubclass(solver, Solver):
+        raise TypeError("The solver must be an instance of the Solver class.")
+
+    stats = []
+    n = 5000
+    start = time.time()
+
+    print(f"🏁 Running Maze Solver for {n} mazes...")
+
+    with ProcessPoolExecutor(max_workers=multiprocessing.cpu_count()) as executor:
+        futures = [executor.submit(run_sample, solver) for _ in range(n)]
+
+        for f in tqdm(
+            as_completed(futures), total=n, desc="Running Samples", unit="sample"
+        ):
+            stats.append(f.result())
+
+    end = time.time()
+    average = average_stats(stats)
+
+    print(f"\n📊 Average Stats Over {n} Runs")
+    print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+
+    for key, value in average.items():
+        if isinstance(value, float):
+            print(f"{key.replace('_', ' ').capitalize():<25}: {value:.2f}")
+        else:
+            print(f"{key.replace('_', ' ').capitalize():<25}: {value}")
+
+    print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    print(f"🕒  Completed in {end - start:.2f} seconds")
+
+
+# @click.command()
+# @click.option(
+#     "--solver",
+#     type=click.Path(),
+#     help="Path to the solver module to use.",
+#     default="solver.py",
+# )
+# @click.option(
+#     "--fast",
+#     is_flag=True,
+#     help="Run the maze solver in fast mode (speed up animation).",
+#     default=False,
+# )
+# def main(solver, fast) -> None:
+#     """Entry point for the 'labyrinth' and 'maze' programs."""
+
+#     run_maze(solver, fast)
 
 
 if __name__ == "__main__":
-    main()
     main()
