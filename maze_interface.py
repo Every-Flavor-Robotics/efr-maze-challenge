@@ -1,6 +1,8 @@
+import json
 import os
 import platform
 import random
+from pathlib import Path
 
 from labyrinth.generate import KruskalsGenerator
 from labyrinth.maze import Cell, Direction, Maze
@@ -16,14 +18,16 @@ def clear_screen():
 
 
 class MazeInterface:
-    def __init__(self, width: int, height: int, silent: bool = False):
+    def __init__(
+        self, width: int, height: int, silent: bool = False, skip_generate: bool = False
+    ):
         self.width = width
         self.height = height
 
         # Whether to print messages or not
         self.silent = silent
 
-        self.maze = self._generate()
+        self.maze = self._generate(skip_generate)
 
         self.shortest_path, _ = dijkstra(
             self.maze, self.maze.start_cell, self.maze.end_cell
@@ -36,25 +40,41 @@ class MazeInterface:
         self.visited_cells.add(self.agent_position.coordinates)
 
         # Generate a random cherry location, ensuring it's not the start or end cell
-        while True:
-            cherry_row = random.randint(0, self.height - 1)
-            cherry_column = random.randint(0, self.width - 1)
-            self.cherry_location = (cherry_row, cherry_column)
-
-            if (
-                self.cherry_location != self.maze.start_cell.coordinates
-                and self.cherry_location != self.maze.end_cell.coordinates
-            ):
-                break
-
-        self.cherry_cell = self.maze[self.cherry_location]
         self.cherry_captured = False
+        self.cherry_location = None
+        self.cherry_cell = None
+
+        # Do not generate a cherry if skip_generate is True
+        if not skip_generate:
+            while True:
+                cherry_row = random.randint(0, self.height - 1)
+                cherry_column = random.randint(0, self.width - 1)
+                try:
+                    self._set_cherry_location(cherry_row, cherry_column)
+                    break
+                except ValueError:
+                    # Retry if the location is invalid (start or end cell)
+                    continue
 
         self.num_moves = 0
         self.goal_reached = False
 
-    def _generate(self):
+    def _set_cherry_location(self, row: int, column: int):
+        """Set the cherry location in the maze."""
+        if (row, column) == self.maze.start_cell.coordinates or (
+            row,
+            column,
+        ) == self.maze.end_cell.coordinates:
+            raise ValueError("Cherry cannot be placed at the start or end cell.")
+
+        self.cherry_location = (row, column)
+        self.cherry_cell = self.maze[self.cherry_location]
+
+    def _generate(self, skip_generate: bool = False):
         """Generate a maze with the specified dimensions."""
+        if skip_generate:
+            return Maze(self.width, self.height, generator=None)
+
         return Maze(self.width, self.height, generator=KruskalsGenerator())
 
     def get_position(self):
@@ -180,7 +200,6 @@ class MazeInterface:
         # Start with a base score of 10,000 and apply penalties:
         # - 100 * manhattan distance to the goal (ignoring walls)
         # - 10 points for each move made more than the shortest path
-        # - 1 points for each visited cell
         # + 500 points for capturing the cherry
 
         return (
@@ -188,8 +207,15 @@ class MazeInterface:
             - 100 * manhattan_distance(self.agent_position, self.maze.end_cell)
             - 10 * max(0, self.num_moves - len(self.shortest_path) - 1)
             + 500 * self.cherry_captured
-            - len(self.visited_cells)
         )
+
+    def _compute_secondary_scores(self):
+        """Compute secondary scores for additional metrics."""
+
+        # Reward each node visited, but penalize for moves
+        explorer_score = len(self.visited_cells) * 10 - self.num_moves
+
+        return explorer_score
 
     def print_final_stats(self):
         """Print the final stats of the maze challenge in a stylized format."""
@@ -203,10 +229,77 @@ class MazeInterface:
                             🗺️  Cells Visited:     {len(self.visited_cells)} / {self.width * self.height}
                             🕹️  Moves Taken:       {self.num_moves} moves
                             📏 Shortest Path:      {shortest_path_length} moves
-                            🍒 Cherry Captured:   {'✅ Yes!' if self.cherry_captured else '❌ No'}
+                            🍒 Cherry Captured:    {'✅ Yes!' if self.cherry_captured else '❌ No'}
                             🏆 Goal Reached:       {'✅ Yes!' if self.goal_reached else '❌ No'}
 
-                            🎯 Final Score:        {self._compute_score()}
+                            ━━━━━━━━━━━━━━━━━━━━━━━
+                            🎯 Efficiency Score:   {self._compute_score()}
+                            🧭 Explorer Score:     {self._compute_secondary_scores()}
                             ━━━━━━━━━━━━━━━━━━━━━━━
 """
         )
+
+    def export(self, filename: str) -> None:
+        """Export the maze to a file in a simple text format using open wall pairs."""
+        open_walls = []
+        for row in range(self.height):
+            for col in range(self.width):
+                cell = self.maze[row, col]
+                for direction in cell.open_walls:
+                    neighbor = self.maze.neighbor(cell, direction)
+                    if neighbor and cell.coordinates < neighbor.coordinates:
+                        open_walls.append(
+                            [list(cell.coordinates), list(neighbor.coordinates)]
+                        )
+
+        data = {
+            "width": self.width,
+            "height": self.height,
+            "open_walls": open_walls,
+            "start": self.maze.start_cell.coordinates,
+            "end": self.maze.end_cell.coordinates,
+            "cherry": self.cherry_location,
+        }
+
+        path = Path(filename)
+        if not path.suffix:
+            path = path.with_suffix(".json")
+        path.parent.mkdir(parents=True, exist_ok=True)
+
+        with open(path, "w") as f:
+            json.dump(data, f, indent=2)
+
+    @classmethod
+    def load(cls, filename: str):
+        """Load a maze from a file with open wall pairs."""
+        path = Path(filename)
+        if not path.suffix:
+            path = path.with_suffix(".json")
+        if not path.exists():
+            raise FileNotFoundError(f"File {filename} does not exist.")
+
+        with open(path, "r") as f:
+            data = json.load(f)
+
+        maze_interface = cls(
+            data["width"], data["height"], silent=True, skip_generate=True
+        )
+
+        # Open walls using Maze.open_wall
+        for pair in data["open_walls"]:
+            (r1, c1), (r2, c2) = pair
+            cell1 = maze_interface.maze[r1, c1]
+            cell2 = maze_interface.maze[r2, c2]
+            Maze.open_wall(cell1, cell2)
+
+        # Restore cherry position
+        maze_interface._set_cherry_location(*data["cherry"])
+
+        # Recompute shortest path
+        maze_interface.shortest_path, _ = dijkstra(
+            maze_interface.maze,
+            maze_interface.maze.start_cell,
+            maze_interface.maze.end_cell,
+        )
+
+        return maze_interface
