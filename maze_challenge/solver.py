@@ -27,7 +27,10 @@ class Solver(ABC):
 
     @abstractmethod
     def choose_move(
-        self, position: Tuple[int, int], possible_moves: Dict[str, Tuple[int, int]]
+        self,
+        position: Tuple[int, int],
+        cherry_position: Tuple[int, int],
+        possible_moves: Dict[str, Tuple[int, int]],
     ) -> str:
         """
         Given the current position and possible directions, return a move as a string:

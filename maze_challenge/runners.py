@@ -44,12 +44,12 @@ def run_solver(solver_class: Solver, fast: bool) -> None:
     solver = solver_class(maze_interface.width, maze_interface.height)
 
     for _ in range(MAX_MOVES):
-        # Get the current position of the agent
+        # Get the current state variables
         position = maze_interface.get_position()
-
+        cherry_position = maze_interface.get_cherry_location()
         possible_moves = maze_interface.get_possible_moves()
 
-        direction = solver.choose_move(position, possible_moves)
+        direction = solver.choose_move(position, cherry_position, possible_moves)
 
         maze_interface.move(direction)
 

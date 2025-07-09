@@ -103,6 +103,12 @@ class MazeInterface:
         # breakpoint()
         return output
 
+    def get_cherry_location(self):
+        """Get the current location of the cherry in the maze."""
+        if self.cherry_location is None:
+            return None
+        return self.cherry_location
+
     def completed(self):
         """Check if the agent has reached the goal."""
         return self.goal_reached
