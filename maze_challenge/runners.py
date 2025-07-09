@@ -34,7 +34,7 @@ def average_stats(stats: list[dict]) -> dict:
 def run_solver(solver_class: Solver, fast: bool) -> None:
 
     # Confirm solver is the correct type
-    if not issubclass(solver, Solver):
+    if not issubclass(solver_class, Solver):
         raise TypeError("The solver must be an instance of the Solver class.")
 
     maze_interface = MazeInterface(WIDTH, HEIGHT)
@@ -100,10 +100,10 @@ def run_sample(solver_class: Solver) -> None:
     return maze_interface.get_stats()
 
 
-def evaluate_solver(solver: Solver) -> None:
+def evaluate_solver(solver_class: Solver) -> None:
 
     # Confirm solver is the correct type
-    if not issubclass(solver, Solver):
+    if not issubclass(solver_class, Solver):
         raise TypeError("The solver must be an instance of the Solver class.")
 
     stats = []
@@ -113,7 +113,7 @@ def evaluate_solver(solver: Solver) -> None:
     print(f"🏁 Running Maze Solver for {n} mazes...")
 
     with ProcessPoolExecutor(max_workers=multiprocessing.cpu_count()) as executor:
-        futures = [executor.submit(run_sample, solver) for _ in range(n)]
+        futures = [executor.submit(run_sample, solver_class) for _ in range(n)]
 
         for f in tqdm(
             as_completed(futures), total=n, desc="Running Samples", unit="sample"
