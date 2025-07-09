@@ -221,6 +221,17 @@ class MazeInterface:
 
         return explorer_score
 
+    def get_stats(self):
+        """Get the current stats of the maze challenge."""
+        return {
+            "visited_cells": len(self.visited_cells),
+            "num_moves": self.num_moves,
+            "goal_reached": int(self.goal_reached),
+            "cherry_captured": int(self.cherry_captured),
+            "score": self._compute_score(),
+            "explorer_score": self._compute_secondary_scores(),
+        }
+
     def print_final_stats(self):
         """Print the final stats of the maze challenge in a stylized format."""
 
