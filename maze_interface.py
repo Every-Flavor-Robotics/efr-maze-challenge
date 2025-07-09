@@ -33,14 +33,7 @@ class MazeInterface:
             self.maze, self.maze.start_cell, self.maze.end_cell
         )
 
-        # Position of the agent in the maze
-        self.agent_position = self.maze.start_cell
-
-        self.visited_cells = set()
-        self.visited_cells.add(self.agent_position.coordinates)
-
         # Generate a random cherry location, ensuring it's not the start or end cell
-        self.cherry_captured = False
         self.cherry_location = None
         self.cherry_cell = None
 
@@ -56,6 +49,17 @@ class MazeInterface:
                     # Retry if the location is invalid (start or end cell)
                     continue
 
+        self.reset()
+
+    def reset(self):
+        """Reset the maze interface to its initial state."""
+
+        self.agent_position = self.maze.start_cell
+
+        self.visited_cells = set()
+        self.visited_cells.add(self.agent_position.coordinates)
+
+        self.cherry_captured = False
         self.num_moves = 0
         self.goal_reached = False
 
@@ -239,8 +243,8 @@ class MazeInterface:
 """
         )
 
-    def export(self, filename: str) -> None:
-        """Export the maze to a file in a simple text format using open wall pairs."""
+    def _generate_maze_description(self):
+        """Generate a description of the maze with open walls and other details."""
         open_walls = []
         for row in range(self.height):
             for col in range(self.width):
@@ -261,13 +265,42 @@ class MazeInterface:
             "cherry": self.cherry_location,
         }
 
+        return data
+
+    def export_stats(self, filename: str) -> None:
+        """Export the current run's stats to a file."""
+        stats = {
+            "position": self.agent_position.coordinates,
+            "visited_cells": list(self.visited_cells),
+            "num_moves": self.num_moves,
+            "goal_reached": self.goal_reached,
+            "cherry_captured": self.cherry_captured,
+            "score": self._compute_score(),
+            "explorer_score": self._compute_secondary_scores(),
+            "shortest_path_length": len(self.shortest_path) - 1,
+            "maze": self._generate_maze_description(),
+        }
+
         path = Path(filename)
         if not path.suffix:
             path = path.with_suffix(".json")
         path.parent.mkdir(parents=True, exist_ok=True)
 
         with open(path, "w") as f:
-            json.dump(data, f, indent=2)
+            json.dump(stats, f, indent=2, sort_keys=True)
+
+    def export_maze(self, filename: str) -> None:
+        """Export the maze to a file in a simple text format using open wall pairs."""
+
+        data = self._generate_maze_description()
+
+        path = Path(filename)
+        if not path.suffix:
+            path = path.with_suffix(".json")
+        path.parent.mkdir(parents=True, exist_ok=True)
+
+        with open(path, "w") as f:
+            json.dump(data, f, indent=2, sort_keys=True)
 
     @classmethod
     def load(cls, filename: str):
