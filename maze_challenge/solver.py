@@ -18,7 +18,7 @@ REVERSE_DIRECTION = {
 }
 
 
-class AbstractSolver(ABC):
+class Solver(ABC):
     """Base class for all solvers. Enforces interface consistency."""
 
     def __init__(self, width: int, height: int):
