@@ -7,7 +7,7 @@ from pathlib import Path
 from labyrinth.generate import KruskalsGenerator
 from labyrinth.maze import Cell, Direction, Maze
 
-from dijkstra import (  # Assuming dijkstra.py is in the same directory
+from maze_challenge.dijkstra import (  # Assuming dijkstra.py is in the same directory
     dijkstra,
     manhattan_distance,
 )
