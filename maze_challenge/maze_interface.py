@@ -150,8 +150,7 @@ class MazeInterface:
                 )
 
         # Only count moves if the goal is not reached
-        if not self.goal_reached:
-            self.num_moves += 1
+        self.num_moves += 1
 
         return moved
 
