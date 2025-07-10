@@ -1,10 +1,8 @@
-import importlib.util
 import multiprocessing
 import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
 
-import click
 from tqdm import tqdm
 
 from .maze_interface import MazeInterface
@@ -33,7 +31,6 @@ def average_stats(stats: list[dict]) -> dict:
 
 
 def run_solver(solver_class: Solver, fast: bool, maze_file: str = None) -> None:
-
     # Confirm solver is the correct type
     if not issubclass(solver_class, Solver):
         raise TypeError("The solver must be an instance of the Solver class.")
@@ -102,9 +99,11 @@ def run_sample(solver_class: Solver) -> None:
         # Get the current position of the agent
         position = maze_interface.get_position()
 
+        cherry_position = maze_interface.get_cherry_location()
+
         possible_moves = maze_interface.get_possible_moves()
 
-        direction = solver.choose_move(position, possible_moves)
+        direction = solver.choose_move(position, cherry_position, possible_moves)
 
         if direction == "":
             break
@@ -118,7 +117,6 @@ def run_sample(solver_class: Solver) -> None:
 
 
 def evaluate_solver(solver_class: Solver) -> None:
-
     # Confirm solver is the correct type
     if not issubclass(solver_class, Solver):
         raise TypeError("The solver must be an instance of the Solver class.")
