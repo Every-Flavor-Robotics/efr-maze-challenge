@@ -163,7 +163,7 @@ class MazeInterface:
         elif cell == self.maze.end_cell:
             return " 🏆 "
         elif cell.coordinates in self.visited_cells:
-            return " 🔸 "
+            return " · "
         elif cell.coordinates == self.cherry_location:
             return " 🍒 "
         else:
