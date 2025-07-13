@@ -6,3 +6,5 @@ labyrinth-py==1.0.4
     # via efr-maze-challenge (pyproject.toml)
 tqdm==4.67.1
     # via efr-maze-challenge (pyproject.toml)
+wcwidth==0.2.13
+    # via efr-maze-challenge (pyproject.toml)
