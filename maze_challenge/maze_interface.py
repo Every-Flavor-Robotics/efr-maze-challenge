@@ -6,6 +6,7 @@ from pathlib import Path
 
 from labyrinth.generate import KruskalsGenerator
 from labyrinth.maze import Direction, Maze
+from wcwidth import wcswidth
 
 from maze_challenge.dijkstra import (  # Assuming dijkstra.py is in the same directory
     dijkstra,
@@ -15,6 +16,22 @@ from maze_challenge.dijkstra import (  # Assuming dijkstra.py is in the same dir
 
 def clear_screen():
     os.system("cls" if platform.system() == "Windows" else "clear")
+
+
+def pad_emoji(symbol: str, width: int = 4):
+    actual_width = wcswidth(symbol)
+    padding = width - actual_width
+
+    # Ensure padding is non-negative
+    if padding < 0:
+        padding = 0
+    # Return the symbol with padding
+
+    # Attempt to center
+    front_padding = padding // 2
+    back_padding = padding - front_padding
+
+    return " " * front_padding + symbol + " " * back_padding
 
 
 class MazeInterface:
@@ -157,15 +174,15 @@ class MazeInterface:
     def _draw_sprite(self, cell, cell_width):
         """Return a string representation of the cell for drawing."""
         if cell == self.agent_position:
-            return " 🤖 "
+            return pad_emoji("🤖", cell_width)
         elif cell == self.maze.start_cell:
-            return " 🏁 "
+            return pad_emoji("🏁", cell_width)
         elif cell == self.maze.end_cell:
-            return " 🏆 "
+            return pad_emoji("🏆", cell_width)
         elif cell.coordinates in self.visited_cells:
-            return " 🔸 "
+            return pad_emoji("🔸", cell_width)
         elif cell.coordinates == self.cherry_location:
-            return " 🍒 "
+            return pad_emoji("🍒", cell_width)
         else:
             return " " * cell_width
 

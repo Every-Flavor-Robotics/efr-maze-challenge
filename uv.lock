@@ -50,6 +50,7 @@ dependencies = [
     { name = "ipdb" },
     { name = "labyrinth-py" },
     { name = "tqdm" },
+    { name = "wcwidth" },
 ]
 
 [package.metadata]
@@ -58,6 +59,7 @@ requires-dist = [
     { name = "ipdb", specifier = ">=0.13.13" },
     { name = "labyrinth-py", specifier = ">=1.0.4" },
     { name = "tqdm", specifier = ">=4.67.1" },
+    { name = "wcwidth", specifier = ">=0.2.13" },
 ]
 
 [[package]]
