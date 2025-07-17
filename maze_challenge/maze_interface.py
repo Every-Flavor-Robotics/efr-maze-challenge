@@ -8,6 +8,9 @@ from labyrinth.generate import KruskalsGenerator
 from labyrinth.maze import Direction, Maze
 from wcwidth import wcswidth
 
+actual_width = wcswidth("🤖")
+
+
 from maze_challenge.dijkstra import (  # Assuming dijkstra.py is in the same directory
     dijkstra,
     manhattan_distance,
@@ -36,13 +39,35 @@ def pad_emoji(symbol: str, width: int = 4):
 
 class MazeInterface:
     def __init__(
-        self, width: int, height: int, silent: bool = False, skip_generate: bool = False
+        self,
+        width: int,
+        height: int,
+        silent: bool = False,
+        skip_generate: bool = False,
+        use_ascii: bool = False,
     ):
         self.width = width
         self.height = height
 
         # Whether to print messages or not
         self.silent = silent
+
+        self.use_ascii = use_ascii
+
+        if self.use_ascii:
+            self.robot_char = "®"
+            self.start_char = "S"
+            self.end_char = "E"
+            self.visted_char = "·"
+            self.cherry_char = "©"
+            self.cell_width = 3
+        else:
+            self.cell_width = 4
+            self.robot_char = "🤖"
+            self.start_char = "🏁"
+            self.end_char = "🏆"
+            self.visted_char = "🔸"
+            self.cherry_char = "🍒"
 
         self.maze = self._generate(skip_generate)
 
@@ -191,19 +216,18 @@ class MazeInterface:
 
         clear_screen()
 
-        cell_width = 4
-        maze_str = "+" + ((("-" * cell_width) + "+") * self.width) + "\n"
+        maze_str = "+" + ((("-" * self.cell_width) + "+") * self.width) + "\n"
         for row in range(self.height):
             maze_str += "|"
             for column in range(self.width):
                 cell = self.maze[row, column]
-                maze_str += self._draw_sprite(cell, cell_width)
+                maze_str += self._draw_sprite(cell, self.cell_width)
                 maze_str += " " if Direction.E in cell.open_walls else "|"
             maze_str += "\n+"
             for column in range(self.width):
                 maze_str += (
                     " " if Direction.S in self.maze[row, column].open_walls else "-"
-                ) * cell_width
+                ) * self.cell_width
                 maze_str += "+"
             maze_str += "\n"
 
@@ -344,7 +368,7 @@ class MazeInterface:
             json.dump(data, f, indent=2, sort_keys=True)
 
     @classmethod
-    def load(cls, filename: str):
+    def load(cls, filename: str, use_ascii: bool = False) -> "MazeInterface":
         """Load a maze from a file with open wall pairs."""
         path = Path(filename)
         if not path.suffix:
@@ -356,7 +380,11 @@ class MazeInterface:
             data = json.load(f)
 
         maze_interface = cls(
-            data["width"], data["height"], silent=True, skip_generate=True
+            data["width"],
+            data["height"],
+            silent=True,
+            skip_generate=True,
+            use_ascii=use_ascii,
         )
 
         # Open walls using Maze.open_wall

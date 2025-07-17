@@ -30,7 +30,9 @@ def average_stats(stats: list[dict]) -> dict:
     return average
 
 
-def run_solver(solver_class: Solver, fast: bool, maze_file: str = None) -> None:
+def run_solver(
+    solver_class: Solver, fast: bool, use_ascii: bool = False, maze_file: str = None
+) -> None:
     # Confirm solver is the correct type
     if not issubclass(solver_class, Solver):
         raise TypeError("The solver must be an instance of the Solver class.")
@@ -42,10 +44,10 @@ def run_solver(solver_class: Solver, fast: bool, maze_file: str = None) -> None:
         if not maze_path.exists():
             raise FileNotFoundError(f"The maze file '{maze_file}' does not exist.")
 
-        maze_interface = MazeInterface.load(maze_path)
+        maze_interface = MazeInterface.load(maze_path, use_ascii=use_ascii)
 
     else:
-        maze_interface = MazeInterface(WIDTH, HEIGHT)
+        maze_interface = MazeInterface(WIDTH, HEIGHT, use_ascii=use_ascii)
 
     sleep = 0.005 if fast else 0.2
 
