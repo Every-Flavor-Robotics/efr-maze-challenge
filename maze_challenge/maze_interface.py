@@ -199,15 +199,15 @@ class MazeInterface:
     def _draw_sprite(self, cell, cell_width):
         """Return a string representation of the cell for drawing."""
         if cell == self.agent_position:
-            return pad_emoji("🤖", cell_width)
+            return pad_emoji(self.robot_char, cell_width)
         elif cell == self.maze.start_cell:
-            return pad_emoji("🏁", cell_width)
+            return pad_emoji(self.start_char, cell_width)
         elif cell == self.maze.end_cell:
-            return pad_emoji("🏆", cell_width)
+            return pad_emoji(self.end_char, cell_width)
         elif cell.coordinates in self.visited_cells:
-            return pad_emoji("🔸", cell_width)
+            return pad_emoji(self.visted_char, cell_width)
         elif cell.coordinates == self.cherry_location:
-            return pad_emoji("🍒", cell_width)
+            return pad_emoji(self.cherry_char, cell_width)
         else:
             return " " * cell_width
 
