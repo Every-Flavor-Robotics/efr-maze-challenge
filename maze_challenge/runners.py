@@ -118,13 +118,13 @@ def run_sample(solver_class: Solver) -> None:
     return maze_interface.get_stats()
 
 
-def evaluate_solver(solver_class: Solver) -> None:
+def evaluate_solver(solver_class: Solver, n: int = 5000) -> None:
     # Confirm solver is the correct type
     if not issubclass(solver_class, Solver):
         raise TypeError("The solver must be an instance of the Solver class.")
 
     stats = []
-    n = 5000
+
     start = time.time()
 
     print(f"🏁 Running Maze Solver for {n} mazes...")
