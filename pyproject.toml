@@ -6,8 +6,16 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "click>=8.2.1",
-    "ipdb>=0.13.13",
     "labyrinth-py>=1.0.4",
     "tqdm>=4.67.1",
     "wcwidth>=0.2.13",
 ]
+
+
+[dependency-groups]
+dev = [
+    "ipdb>=0.13.13",
+]
+
+[tool.uv.workspace]
+members = ["sim/usd-generator"]
