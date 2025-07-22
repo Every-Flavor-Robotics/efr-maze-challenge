@@ -192,6 +192,30 @@ def evaluate_solver(solver_class: Solver, n: int = 5000) -> None:
     print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
     print(f"🕒  Completed in {end - start:.2f} seconds")
 
+    # Get index of the worst run
+    best_run_index = max(range(len(stats)), key=lambda i: stats[i]["score"])
+    worst_run_index = min(range(len(stats)), key=lambda i: stats[i]["score"])
+
+    # Print worst run stats
+    print(f"\n😱 Worst Run Stats (Run {worst_run_index + 1})")
+    print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    for key, value in stats[worst_run_index].items():
+        if isinstance(value, float):
+            print(f"{key.replace('_', ' ').capitalize():<25}: {value:.2f}")
+        else:
+            print(f"{key.replace('_', ' ').capitalize():<25}: {value}")
+    print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+
+    # Print best run stats
+    print(f"\n🏆 Best Run Stats (Run {best_run_index + 1})")
+    print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    for key, value in stats[best_run_index].items():
+        if isinstance(value, float):
+            print(f"{key.replace('_', ' ').capitalize():<25}: {value:.2f}")
+        else:
+            print(f"{key.replace('_', ' ').capitalize():<25}: {value}")
+    print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+
     generate_plots(stats)
 
 
