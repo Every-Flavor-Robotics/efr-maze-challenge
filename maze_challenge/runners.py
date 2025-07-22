@@ -1,8 +1,11 @@
 import multiprocessing
+import os
+import sys
 import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
 
+import matplotlib
 from tqdm import tqdm
 
 from .maze_interface import MazeInterface
@@ -16,18 +19,9 @@ HEIGHT = 20
 MAX_MOVES = 2000
 
 
-def average_stats(stats: list[dict]) -> dict:
-    """Calculate the average of the stats from multiple runs."""
-    if not stats:
-        return {}
-
-    total = {key: 0 for key in stats[0].keys()}
-    for stat in stats:
-        for key, value in stat.items():
-            total[key] += value
-
-    average = {key: value / len(stats) for key, value in total.items()}
-    return average
+def safe_matplotlib_backend():
+    if not os.environ.get("DISPLAY") and sys.platform != "win32":
+        matplotlib.use("Agg")  # Use non-interactive backend
 
 
 def run_solver(
@@ -118,6 +112,52 @@ def run_sample(solver_class: Solver) -> None:
     return maze_interface.get_stats()
 
 
+def generate_plots(stats: list[dict]) -> None:
+    """Generate plots from the stats of multiple runs."""
+
+    # Generate histograms of the score, explorer score, number of moves, and visted cells
+    import matplotlib.pyplot as plt
+
+    score = [stat["score"] for stat in stats]
+    explorer_score = [stat["explorer_score"] for stat in stats]
+    num_moves = [stat["num_moves"] for stat in stats]
+    visited_cells = [stat["visited_cells"] for stat in stats]
+
+    plt.figure(figsize=(12, 8))
+    plt.subplot(2, 2, 1)
+    plt.hist(score, bins=20, color="blue", alpha=0.7)
+    # xscale
+    plt.xlim(0, 11000)
+    plt.title("Score Distribution")
+    plt.xlabel("Score")
+    plt.ylabel("Frequency")
+
+    plt.subplot(2, 2, 2)
+    plt.hist(explorer_score, bins=20, color="green", alpha=0.7)
+    plt.xlim(0, 5000)
+    plt.title("Explorer Score Distribution")
+    plt.xlabel("Explorer Score")
+    plt.ylabel("Frequency")
+
+    plt.subplot(2, 2, 3)
+    plt.hist(num_moves, bins=20, color="red", alpha=0.7)
+    plt.xlim(0, MAX_MOVES)
+    plt.title("Number of Moves Distribution")
+    plt.xlabel("Number of Moves")
+    plt.ylabel("Frequency")
+
+    plt.subplot(2, 2, 4)
+    plt.hist(visited_cells, bins=20, color="purple", alpha=0.7)
+    plt.xlim(0, WIDTH * HEIGHT)
+    plt.title("Visited Cells Distribution")
+    plt.xlabel("Visited Cells")
+    plt.ylabel("Frequency")
+    plt.tight_layout()
+
+    plt.show()
+    plt.close()
+
+
 def evaluate_solver(solver_class: Solver, n: int = 5000) -> None:
     # Confirm solver is the correct type
     if not issubclass(solver_class, Solver):
@@ -151,6 +191,8 @@ def evaluate_solver(solver_class: Solver, n: int = 5000) -> None:
 
     print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
     print(f"🕒  Completed in {end - start:.2f} seconds")
+
+    generate_plots(stats)
 
 
 # @click.command()
