@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -81,7 +82,7 @@
             background: white;
             border-radius: 12px;
             padding: 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             border: 2px solid #fed7aa;
         }
 
@@ -119,7 +120,7 @@
 
         .btn:hover:not(:disabled) {
             transform: translateY(-1px);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
 
         .btn:disabled {
@@ -188,7 +189,7 @@
             background: #dc2626;
             color: white;
             transform: scale(1.2);
-            box-shadow: 0 0 20px rgba(220,38,38,0.5);
+            box-shadow: 0 0 20px rgba(220, 38, 38, 0.5);
         }
 
         .node-neighbor {
@@ -257,7 +258,7 @@
             bottom: 1px;
             right: 1px;
             font-size: 10px;
-            background: rgba(255,255,255,0.9);
+            background: rgba(255, 255, 255, 0.9);
             padding: 1px 3px;
             border-radius: 2px;
             color: #1f2937;
@@ -323,6 +324,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div class="header">
@@ -477,16 +479,16 @@
         // Graph data
         const graphData = {
             nodes: {
-                A: {x: 20, y: 50},
-                B: {x: 40, y: 25},
-                C: {x: 40, y: 75},
-                D: {x: 60, y: 25},
-                E: {x: 60, y: 75},
-                F: {x: 80, y: 50}
+                A: { x: 20, y: 50 },
+                B: { x: 40, y: 25 },
+                C: { x: 40, y: 75 },
+                D: { x: 60, y: 25 },
+                E: { x: 60, y: 75 },
+                F: { x: 80, y: 50 }
             },
             edges: [
-                ['A','B'], ['A','C'], ['B','D'], 
-                ['C','E'], ['D','F'], ['E','F']
+                ['A', 'B'], ['A', 'C'], ['B', 'D'],
+                ['C', 'E'], ['D', 'F']
             ]
         };
 
@@ -506,8 +508,8 @@
                 ];
                 this.known = new Set();
                 this.costs = {};
-                this.start = {x: 1, y: 1};
-                this.goal = {x: 7, y: 7};
+                this.start = { x: 1, y: 1 };
+                this.goal = { x: 7, y: 7 };
             }
 
             reset() {
@@ -563,7 +565,7 @@
         }
 
         // --- Rendering Functions ---
-        
+
         function renderMaze() {
             const vizArea = document.getElementById('vizArea');
             vizArea.innerHTML = '';
@@ -598,7 +600,7 @@
                         if (cost !== undefined) {
                             const costDiv = document.createElement('div');
                             costDiv.className = 'cell-cost';
-                            
+
                             // UPDATED: Handle both simple cost (number) and detailed cost (object)
                             if (typeof cost === 'object' && cost !== null) {
                                 costDiv.style.fontSize = '8px';
@@ -607,7 +609,7 @@
                             } else {
                                 costDiv.textContent = cost;
                             }
-                            
+
                             if (!maze.isKnown(x, y)) {
                                 costDiv.style.opacity = '0.7';
                             }
@@ -621,7 +623,7 @@
         }
 
         function renderMazeState(pos, visited) {
-            renderMaze(); 
+            renderMaze();
             if (pos) {
                 const cell = document.getElementById(`cell-${pos.x}-${pos.y}`);
                 if (cell) cell.classList.add('cell-current');
@@ -630,8 +632,8 @@
                 visited.forEach(key => {
                     const [x, y] = key.split(',').map(Number);
                     if (!pos || !(x === pos.x && y === pos.y)) {
-                         const cell = document.getElementById(`cell-${x}-${y}`);
-                         if(cell) cell.classList.add('cell-visited');
+                        const cell = document.getElementById(`cell-${x}-${y}`);
+                        if (cell) cell.classList.add('cell-visited');
                     }
                 });
             }
@@ -690,16 +692,16 @@
             const visited = new Set(['A']);
             const adj = {};
             Object.keys(graphData.nodes).forEach(n => adj[n] = []);
-            graphData.edges.forEach(([a,b]) => { adj[a].push(b); adj[b].push(a); });
+            graphData.edges.forEach(([a, b]) => { adj[a].push(b); adj[b].push(a); });
             document.getElementById(`node-A`).classList.add('node-visited');
-            updateState('graph', {queue, visited: Array.from(visited)});
+            updateState('graph', { queue, visited: Array.from(visited) });
             while (queue.length > 0 && !isPaused) {
                 highlightLine(6);
                 await sleep(800);
                 const current = queue.shift();
                 document.querySelectorAll('.node-current').forEach(n => n.classList.remove('node-current'));
                 document.getElementById(`node-${current}`).classList.add('node-current');
-                updateState('graph', {queue, visited: Array.from(visited)});
+                updateState('graph', { queue, visited: Array.from(visited) });
                 for (const neighbor of adj[current]) {
                     if (!visited.has(neighbor)) {
                         highlightLine(9);
@@ -707,7 +709,7 @@
                         visited.add(neighbor);
                         queue.push(neighbor);
                         document.getElementById(`node-${neighbor}`).classList.add('node-visited');
-                        updateState('graph', {queue, visited: Array.from(visited)});
+                        updateState('graph', { queue, visited: Array.from(visited) });
                     }
                 }
             }
@@ -719,8 +721,8 @@
             const visited = new Set();
             const adj = {};
             Object.keys(graphData.nodes).forEach(n => adj[n] = []);
-            graphData.edges.forEach(([a,b]) => { adj[a].push(b); adj[b].push(a); });
-            updateState('graph', {queue: stack, visited: []});
+            graphData.edges.forEach(([a, b]) => { adj[a].push(b); adj[b].push(a); });
+            updateState('graph', { queue: stack, visited: [] });
             while (stack.length > 0 && !isPaused) {
                 highlightLine(5);
                 await sleep(800);
@@ -730,14 +732,14 @@
                     document.querySelectorAll('.node-current').forEach(n => n.classList.remove('node-current'));
                     document.getElementById(`node-${current}`).classList.add('node-current');
                     document.getElementById(`node-${current}`).classList.add('node-visited');
-                    updateState('graph', {queue: stack, visited: Array.from(visited)});
+                    updateState('graph', { queue: stack, visited: Array.from(visited) });
                     highlightLine(7);
                     await sleep(800);
                     for (const neighbor of adj[current]) {
                         if (!visited.has(neighbor)) {
                             highlightLine(9);
                             stack.push(neighbor);
-                            updateState('graph', {queue: stack, visited: Array.from(visited)});
+                            updateState('graph', { queue: stack, visited: Array.from(visited) });
                             await sleep(400);
                         }
                     }
@@ -747,14 +749,14 @@
         }
 
         async function runRightWall() {
-            let pos = {...maze.start};
+            let pos = { ...maze.start };
             let dir = 'E';
             const visited = new Set();
             const dirs = {
-                'N': {dx: 0, dy: -1, right: 'E', left: 'W', back: 'S', symbol: '↑'},
-                'E': {dx: 1, dy: 0, right: 'S', left: 'N', back: 'W', symbol: '→'},
-                'S': {dx: 0, dy: 1, right: 'W', left: 'E', back: 'N', symbol: '↓'},
-                'W': {dx: -1, dy: 0, right: 'N', left: 'S', back: 'E', symbol: '←'}
+                'N': { dx: 0, dy: -1, right: 'E', left: 'W', back: 'S', symbol: '↑' },
+                'E': { dx: 1, dy: 0, right: 'S', left: 'N', back: 'W', symbol: '→' },
+                'S': { dx: 0, dy: 1, right: 'W', left: 'E', back: 'N', symbol: '↓' },
+                'W': { dx: -1, dy: 0, right: 'N', left: 'S', back: 'E', symbol: '←' }
             };
             while (!(pos.x === maze.goal.x && pos.y === maze.goal.y) && !isPaused) {
                 visited.add(`${pos.x},${pos.y}`);
@@ -769,9 +771,9 @@
                     return nx >= 0 && nx < 10 && ny >= 0 && ny < 9 && maze.isKnown(nx, ny) && !maze.isWall(nx, ny);
                 };
                 const rightDir = dirs[dir].right, leftDir = dirs[dir].left, backDir = dirs[dir].back;
-                if (canMove(rightDir)) { highlightLine(5); dir = rightDir; await sleep(400); } 
-                else if (canMove(dir)) { highlightLine(7); await sleep(400); } 
-                else if (canMove(leftDir)) { highlightLine(9); dir = leftDir; await sleep(400); } 
+                if (canMove(rightDir)) { highlightLine(5); dir = rightDir; await sleep(400); }
+                else if (canMove(dir)) { highlightLine(7); await sleep(400); }
+                else if (canMove(leftDir)) { highlightLine(9); dir = leftDir; await sleep(400); }
                 else { highlightLine(11); dir = backDir; await sleep(400); }
                 highlightLine(12);
                 pos.x += dirs[dir].dx;
@@ -783,7 +785,7 @@
         }
 
         async function runRandom() {
-            let pos = {...maze.start};
+            let pos = { ...maze.start };
             const visited = new Set();
             let steps = 0;
             const maxSteps = 500;
@@ -795,10 +797,10 @@
                 highlightLine(2);
                 await sleep(600);
                 const moves = [];
-                [[0,1],[1,0],[0,-1],[-1,0]].forEach(([dx,dy]) => {
+                [[0, 1], [1, 0], [0, -1], [-1, 0]].forEach(([dx, dy]) => {
                     const nx = pos.x + dx, ny = pos.y + dy;
                     if (nx >= 0 && nx < 10 && ny >= 0 && ny < 9 && maze.isKnown(nx, ny) && !maze.isWall(nx, ny)) {
-                        moves.push({x: nx, y: ny});
+                        moves.push({ x: nx, y: ny });
                     }
                 });
                 if (moves.length > 0) {
@@ -819,22 +821,22 @@
         }
 
         async function runFloodFill() {
-            let pos = {...maze.start};
+            let pos = { ...maze.start };
             const visited = new Set();
             const calculateCosts = () => {
                 maze.costs = {};
-                const queue = [{x: maze.goal.x, y: maze.goal.y, cost: 0}];
+                const queue = [{ x: maze.goal.x, y: maze.goal.y, cost: 0 }];
                 const seen = new Set([`${maze.goal.x},${maze.goal.y}`]);
                 maze.costs[`${maze.goal.x},${maze.goal.y}`] = 0;
                 while (queue.length > 0) {
-                    const {x, y, cost} = queue.shift();
-                    [[0,1],[1,0],[0,-1],[-1,0]].forEach(([dx,dy]) => {
+                    const { x, y, cost } = queue.shift();
+                    [[0, 1], [1, 0], [0, -1], [-1, 0]].forEach(([dx, dy]) => {
                         const nx = x + dx, ny = y + dy;
                         const key = `${nx},${ny}`;
                         if (!seen.has(key) && nx >= 0 && nx < 10 && ny >= 0 && ny < 9 && !(maze.isKnown(nx, ny) && maze.isWall(nx, ny))) {
                             seen.add(key);
                             maze.costs[key] = cost + 1;
-                            queue.push({x: nx, y: ny, cost: cost + 1});
+                            queue.push({ x: nx, y: ny, cost: cost + 1 });
                         }
                     });
                 }
@@ -842,7 +844,7 @@
 
             while (!(pos.x === maze.goal.x && pos.y === maze.goal.y) && !isPaused) {
                 visited.add(`${pos.x},${pos.y}`);
-                
+
                 highlightLine(2);
                 maze.discover(pos.x, pos.y);
                 updateState('maze', { position: `(${pos.x}, ${pos.y})`, status: 'Discovering adjacent walls...' });
@@ -858,17 +860,17 @@
                 highlightLine(4);
                 let bestMove = null;
                 let bestCost = Infinity;
-                [[0,1],[1,0],[0,-1],[-1,0]].forEach(([dx,dy]) => {
+                [[0, 1], [1, 0], [0, -1], [-1, 0]].forEach(([dx, dy]) => {
                     const nx = pos.x + dx, ny = pos.y + dy;
                     if (maze.isKnown(nx, ny) && !maze.isWall(nx, ny)) {
                         const cost = maze.costs[`${nx},${ny}`];
                         if (cost !== undefined && cost < bestCost) {
                             bestCost = cost;
-                            bestMove = {x: nx, y: ny};
+                            bestMove = { x: nx, y: ny };
                         }
                     }
                 });
-                
+
                 if (bestMove) {
                     pos = bestMove;
                     updateState('maze', { position: `(${pos.x}, ${pos.y})`, status: 'Moving to best neighbor...' });
@@ -884,14 +886,14 @@
         }
 
         async function runPlanner() {
-            let pos = {...maze.start};
+            let pos = { ...maze.start };
             const visitedNodes = new Set([`${pos.x},${pos.y}`]);
-            
+
             const bfsOnKnownMaze = (startNode, endNode = null) => {
                 const startKey = `${startNode.x},${startNode.y}`;
                 const queue = [[startKey]];
                 const visited = new Set([startKey]);
-                const distances = {[startKey]: 0};
+                const distances = { [startKey]: 0 };
 
                 while (queue.length > 0) {
                     const path = queue.shift();
@@ -899,10 +901,10 @@
                     const [x, y] = key.split(',').map(Number);
 
                     if (endNode && x === endNode.x && y === endNode.y) {
-                        return path; 
+                        return path;
                     }
 
-                    [[0,1],[1,0],[0,-1],[-1,0]].forEach(([dx,dy]) => {
+                    [[0, 1], [1, 0], [0, -1], [-1, 0]].forEach(([dx, dy]) => {
                         const nx = x + dx, ny = y + dy;
                         const newKey = `${nx},${ny}`;
                         if (maze.isKnown(nx, ny) && !maze.isWall(nx, ny) && !visited.has(newKey)) {
@@ -913,7 +915,7 @@
                         }
                     });
                 }
-                return endNode ? null : distances; 
+                return endNode ? null : distances;
             };
 
             while (!(pos.x === maze.goal.x && pos.y === maze.goal.y) && !isPaused) {
@@ -935,36 +937,36 @@
                     if (maze.isWall(x, y)) continue;
 
                     const goalDist = Math.abs(x - maze.goal.x) + Math.abs(y - maze.goal.y);
-                    
+
                     if (visitedNodes.has(key)) continue;
-                    
+
                     const travelCost = travelCosts[key];
                     if (travelCost === undefined) continue;
 
                     let bonus = 0;
-                    [[0,1],[1,0],[0,-1],[-1,0]].forEach(([dx,dy]) => {
+                    [[0, 1], [1, 0], [0, -1], [-1, 0]].forEach(([dx, dy]) => {
                         if (!maze.isKnown(x + dx, y + dy)) {
                             bonus = -5;
                         }
                     });
 
                     const totalCost = goalDist + travelCost + bonus;
-                    
+
                     // UPDATED: Store a detailed object for visualization
                     maze.costs[key] = { total: totalCost, g: travelCost, h: goalDist };
 
                     if (totalCost < minCost) {
                         minCost = totalCost;
-                        bestTargetNode = {x, y};
+                        bestTargetNode = { x, y };
                     }
                 }
                 updateState('maze', { position: `(${pos.x}, ${pos.y})`, status: 'Choosing best target...' });
                 renderMazeState(pos, visitedNodes);
                 await sleep(800);
-                
+
                 if (!bestTargetNode) {
-                     updateState('maze', { position: `(${pos.x}, ${pos.y})`, status: 'No path found!' });
-                     break;
+                    updateState('maze', { position: `(${pos.x}, ${pos.y})`, status: 'No path found!' });
+                    break;
                 }
 
                 highlightLine(9);
@@ -975,12 +977,12 @@
                 highlightLine(10);
                 for (let i = 1; i < pathToTarget.length; i++) {
                     const [x, y] = pathToTarget[i].split(',').map(Number);
-                    pos = {x, y};
+                    pos = { x, y };
                     visitedNodes.add(pathToTarget[i]);
                     renderMazeState(pos, visitedNodes);
                     await sleep(250);
                 }
-                
+
                 updateState('maze', { position: `(${pos.x}, ${pos.y})`, status: 'Reached target. Re-evaluating...' });
                 await sleep(500);
             }
@@ -997,7 +999,7 @@
             const pseudocode = document.getElementById('pseudocode');
             pseudocode.innerHTML = config.pseudocode.map(line => `<div class="code-line">${line}</div>`).join('');
             document.getElementById('statePanel').innerHTML = '<div class="state-box">Ready</div>';
-            
+
             if (config.type === 'graph') {
                 renderGraph();
             } else {
@@ -1069,4 +1071,5 @@
         });
     </script>
 </body>
+
 </html>
