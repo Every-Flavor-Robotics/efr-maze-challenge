@@ -333,14 +333,14 @@
         </div>
 
         <div class="tabs" id="tabs">
+            <button class="tab" data-algo="random">Random</button>
             <button class="tab active" data-algo="bfs">BFS</button>
             <button class="tab" data-algo="dfs">DFS</button>
             <button class="tab" data-algo="bfsmaze">BFS (Maze)</button>
             <button class="tab" data-algo="dfsmaze">DFS (Maze)</button>
             <button class="tab" data-algo="rightwall">Right Wall</button>
-            <button class="tab" data-algo="random">Random</button>
-            <button class="tab" data-algo="floodfill">Flood Fill</button>
             <button class="tab" data-algo="planner">Exploration Planner</button>
+            <button class="tab" data-algo="floodfill">Flood Fill</button>
         </div>
 
         <div class="main-grid">
@@ -1026,7 +1026,7 @@
             highlightLine(null);
         }
 
-        
+
         async function runBFSMaze() {
             const startPos = { ...maze.start };
             const visited = new Set();
@@ -1056,8 +1056,8 @@
                 await sleep(400);
 
                 highlightLine(7);
-                const dirs = [[0,1],[1,0],[0,-1],[-1,0]];
-                for (const [dx,dy] of dirs) {
+                const dirs = [[0, 1], [1, 0], [0, -1], [-1, 0]];
+                for (const [dx, dy] of dirs) {
                     const nx = current.x + dx, ny = current.y + dy;
                     const nkey = `${nx},${ny}`;
                     if (nx >= 0 && nx < 10 && ny >= 0 && ny < 9 && !maze.isWall(nx, ny) && !visited.has(nkey)) {
@@ -1100,10 +1100,10 @@
                 await sleep(400);
 
                 highlightLine(9);
-                const dirs = [[0,1],[1,0],[0,-1],[-1,0]];
+                const dirs = [[0, 1], [1, 0], [0, -1], [-1, 0]];
                 // Push in reverse order if you want NESW visitation; keeping NESW push order means W gets popped first. We'll keep NESW then rely on LIFO.
                 for (let i = dirs.length - 1; i >= 0; i--) {
-                    const [dx,dy] = dirs[i];
+                    const [dx, dy] = dirs[i];
                     const nx = current.x + dx, ny = current.y + dy;
                     if (nx >= 0 && nx < 10 && ny >= 0 && ny < 9 && !maze.isWall(nx, ny)) {
                         stack.push({ x: nx, y: ny });
@@ -1114,7 +1114,7 @@
             }
             highlightLine(null);
         }
-// --- Setup and Control ---
+        // --- Setup and Control ---
 
         function setupAlgorithm(algo) {
             currentAlgo = algo;
