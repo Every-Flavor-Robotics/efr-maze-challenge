@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maze Solving Algorithms Visualization</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #fed7aa 0%, #ffedd5 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #7c2d12;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #92400e;
+            font-size: 1.1rem;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            background: white;
+            color: #92400e;
+            border: 2px solid #fed7aa;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .tab:hover {
+            background: #fed7aa;
+            transform: translateY(-2px);
+        }
+
+        .tab.active {
+            background: #f97316;
+            color: white;
+            border-color: #ea580c;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border: 2px solid #fed7aa;
+        }
+
+        .viz-panel {
+            min-height: 500px;
+        }
+
+        .viz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .viz-title {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: #7c2d12;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            color: white;
+        }
+
+        .btn:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-start {
+            background: #f97316;
+        }
+
+        .btn-start:hover:not(:disabled) {
+            background: #ea580c;
+        }
+
+        .btn-step {
+            background: #fbbf24;
+            color: #78350f;
+        }
+
+        .btn-step:hover:not(:disabled) {
+            background: #f59e0b;
+        }
+
+        .btn-reset {
+            background: #6b7280;
+        }
+
+        .btn-reset:hover:not(:disabled) {
+            background: #4b5563;
+        }
+
+        #vizArea {
+            width: 100%;
+            height: 450px;
+            background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+            border-radius: 8px;
+            border: 2px solid #fed7aa;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Graph styles */
+        .graph-node {
+            position: absolute;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            background: white;
+            border: 3px solid #f97316;
+            color: #7c2d12;
+            transition: all 0.3s;
+            z-index: 10;
+        }
+
+        .node-visited {
+            background: #fdba74;
+            color: white;
+        }
+
+        .node-current {
+            background: #dc2626;
+            color: white;
+            transform: scale(1.2);
+            box-shadow: 0 0 20px rgba(220,38,38,0.5);
+        }
+
+        .node-neighbor {
+            background: #fde047;
+            color: #713f12;
+        }
+
+        /* Maze styles */
+        .maze-grid {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            display: grid;
+            gap: 1px;
+            background: #374151;
+            padding: 2px;
+            border-radius: 4px;
+        }
+
+        .maze-cell {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            position: relative;
+        }
+
+        .cell-unknown {
+            background: #9ca3af;
+        }
+
+        .cell-wall {
+            background: #1f2937;
+        }
+
+        .cell-path {
+            background: #fef3c7;
+        }
+
+        .cell-visited {
+            background: #fdba74;
+        }
+
+        .cell-current {
+            background: #dc2626 !important;
+            color: white;
+            z-index: 10;
+        }
+
+        .cell-start {
+            background: #f97316 !important;
+            color: white;
+        }
+
+        .cell-goal {
+            background: #16a34a !important;
+            color: white;
+        }
+
+        .cell-cost {
+            position: absolute;
+            bottom: 1px;
+            right: 1px;
+            font-size: 10px;
+            background: rgba(255,255,255,0.9);
+            padding: 1px 3px;
+            border-radius: 2px;
+            color: #1f2937;
+            line-height: 1;
+        }
+
+        .side-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .side-section h3 {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #7c2d12;
+            margin-bottom: 12px;
+        }
+
+        .pseudocode {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.6;
+            color: #374151;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        .code-line {
+            padding: 2px 8px;
+            border-radius: 3px;
+            white-space: pre;
+        }
+
+        .code-line.active {
+            background: #fde047;
+            font-weight: bold;
+        }
+
+        .state-box {
+            background: #fef3c7;
+            border: 2px solid #fbbf24;
+            padding: 12px;
+            border-radius: 6px;
+            min-height: 50px;
+        }
+
+        .state-item {
+            display: inline-block;
+            background: #f97316;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 4px;
+            margin: 2px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        @media (max-width: 768px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Maze Solving Algorithms</h1>
+            <p>Interactive visualization of pathfinding strategies</p>
+        </div>
+
+        <div class="tabs" id="tabs">
+            <button class="tab active" data-algo="bfs">BFS</button>
+            <button class="tab" data-algo="dfs">DFS</button>
+            <button class="tab" data-algo="rightwall">Right Wall</button>
+            <button class="tab" data-algo="random">Random</button>
+            <button class="tab" data-algo="floodfill">Flood Fill</button>
+            <button class="tab" data-algo="planner">Mrinal Planner</button>
+        </div>
+
+        <div class="main-grid">
+            <div class="panel viz-panel">
+                <div class="viz-header">
+                    <div class="viz-title" id="vizTitle">Breadth-First Search</div>
+                    <div class="controls">
+                        <button class="btn btn-start" id="startBtn">Start</button>
+                        <button class="btn btn-step" id="stepBtn">Step</button>
+                        <button class="btn btn-reset" id="resetBtn">Reset</button>
+                    </div>
+                </div>
+                <div id="vizArea"></div>
+            </div>
+
+            <div class="side-panel">
+                <div class="panel">
+                    <div class="side-section">
+                        <h3>Pseudocode</h3>
+                        <div class="pseudocode" id="pseudocode"></div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="side-section">
+                        <h3>Algorithm State</h3>
+                        <div id="statePanel"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let currentAlgo = 'bfs';
+        let isRunning = false;
+        let isPaused = false;
+        let stepMode = false;
+        let stepResolver = null;
+
+        // Algorithm configurations
+        const algorithms = {
+            bfs: {
+                name: 'Breadth-First Search',
+                type: 'graph',
+                pseudocode: [
+                    'BFS(Graph G, Start s):',
+                    '  Create Queue Q',
+                    '  Create Visited Set V',
+                    '  Add s to V',
+                    '  Add s to Q',
+                    '  While Q not empty:',
+                    '    current = Q.dequeue()',
+                    '    For each neighbor n:',
+                    '      If n not visited:',
+                    '        Add n to V',
+                    '        Add n to Q'
+                ]
+            },
+            dfs: {
+                name: 'Depth-First Search',
+                type: 'graph',
+                pseudocode: [
+                    'DFS(Graph G, Start s):',
+                    '  Create Stack S',
+                    '  Create Visited Set V',
+                    '  Push s to S',
+                    '  While S not empty:',
+                    '    current = S.pop()',
+                    '    If current not in V:',
+                    '      Add current to V',
+                    '      For each neighbor n:',
+                    '        Push n to S'
+                ]
+            },
+            rightwall: {
+                name: 'Right Wall Following',
+                type: 'maze',
+                pseudocode: [
+                    'RightWall(Maze M):',
+                    '  direction = East',
+                    '  While not at goal:',
+                    '    Discover walls',
+                    '    If can turn right:',
+                    '      Turn right',
+                    '    Else if can go straight:',
+                    '      Go straight',
+                    '    Else if can turn left:',
+                    '      Turn left',
+                    '    Else:',
+                    '      Turn around',
+                    '    Move forward'
+                ]
+            },
+            random: {
+                name: 'Random Walk',
+                type: 'maze',
+                pseudocode: [
+                    'Random(Maze M):',
+                    '  While not at goal:',
+                    '    Discover walls',
+                    '    Get valid moves',
+                    '    Pick random move',
+                    '    Move to choice'
+                ]
+            },
+            floodfill: {
+                name: 'Flood Fill',
+                type: 'maze',
+                pseudocode: [
+                    'FloodFill(Maze M):',
+                    '  While not at goal:',
+                    '    Discover walls',
+                    '    Calculate distances to goal',
+                    '    Move to lowest distance neighbor'
+                ]
+            },
+            planner: {
+                name: 'Mrinal Planner',
+                type: 'maze',
+                pseudocode: [
+                    'MrinalPlanner(Start s, Goal f):',
+                    '  Create Graph G of known maze',
+                    '  while not at goal:',
+                    '    Update G with new discoveries',
+                    '    for each known, unvisited node n:',
+                    '      goal_dist = Heuristic distance from n to f',
+                    '      travel_cost = Path distance from s to n',
+                    '      cost = goal_dist + travel_cost + bonus(n)',
+                    '    Choose node t with lowest cost',
+                    '    Plan and execute path from s to t',
+                    '    s = t'
+                ]
+            }
+        };
+
+        // Graph data
+        const graphData = {
+            nodes: {
+                A: {x: 20, y: 50},
+                B: {x: 40, y: 25},
+                C: {x: 40, y: 75},
+                D: {x: 60, y: 25},
+                E: {x: 60, y: 75},
+                F: {x: 80, y: 50}
+            },
+            edges: [
+                ['A','B'], ['A','C'], ['B','D'], 
+                ['C','E'], ['D','F'], ['E','F']
+            ]
+        };
+
+        // Maze class
+        class Maze {
+            constructor() {
+                this.grid = [
+                    '##########',
+                    '#S       #',
+                    '### #### #',
+                    '#     # #',
+                    '# ### # ##',
+                    '#   #    #',
+                    '### ######',
+                    '#     G  #',
+                    '##########'
+                ];
+                this.known = new Set();
+                this.costs = {};
+                this.start = {x: 1, y: 1};
+                this.goal = {x: 7, y: 7};
+            }
+
+            reset() {
+                this.known.clear();
+                this.costs = {};
+                this.known.add(`${this.start.x},${this.start.y}`);
+            }
+
+            discover(x, y) {
+                for (let dx = -1; dx <= 1; dx++) {
+                    for (let dy = -1; dy <= 1; dy++) {
+                        if (Math.abs(dx) + Math.abs(dy) === 1) {
+                            const nx = x + dx, ny = y + dy;
+                            if (nx >= 0 && nx < 10 && ny >= 0 && ny < 9) {
+                                this.known.add(`${nx},${ny}`);
+                            }
+                        }
+                    }
+                }
+            }
+
+            isWall(x, y) {
+                return this.grid[y][x] === '#';
+            }
+
+            isKnown(x, y) {
+                return this.known.has(`${x},${y}`);
+            }
+        }
+
+        const maze = new Maze();
+
+        // Utility functions
+        function sleep(ms) {
+            if (stepMode) {
+                return new Promise(resolve => {
+                    stepResolver = resolve;
+                });
+            }
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        function highlightLine(lineNum) {
+            document.querySelectorAll('.code-line').forEach(line => {
+                line.classList.remove('active');
+            });
+            if (lineNum !== null && lineNum >= 0) {
+                const lines = document.querySelectorAll('.code-line');
+                if (lines[lineNum]) {
+                    lines[lineNum].classList.add('active');
+                }
+            }
+        }
+
+        // --- Rendering Functions ---
+        
+        function renderMaze() {
+            const vizArea = document.getElementById('vizArea');
+            vizArea.innerHTML = '';
+
+            const grid = document.createElement('div');
+            grid.className = 'maze-grid';
+            grid.style.gridTemplateColumns = `repeat(10, 40px)`;
+
+            for (let y = 0; y < 9; y++) {
+                for (let x = 0; x < 10; x++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'maze-cell';
+                    cell.id = `cell-${x}-${y}`;
+
+                    if (!maze.isKnown(x, y)) {
+                        cell.classList.add('cell-unknown');
+                    } else if (maze.isWall(x, y)) {
+                        cell.classList.add('cell-wall');
+                    } else {
+                        cell.classList.add('cell-path');
+                        if (x === maze.start.x && y === maze.start.y) {
+                            cell.classList.add('cell-start');
+                            cell.textContent = 'S';
+                        } else if (x === maze.goal.x && y === maze.goal.y) {
+                            cell.classList.add('cell-goal');
+                            cell.textContent = 'G';
+                        }
+                    }
+
+                    if (currentAlgo === 'floodfill' || currentAlgo === 'planner') {
+                        const cost = maze.costs[`${x},${y}`];
+                        if (cost !== undefined) {
+                            const costDiv = document.createElement('div');
+                            costDiv.className = 'cell-cost';
+                            
+                            // UPDATED: Handle both simple cost (number) and detailed cost (object)
+                            if (typeof cost === 'object' && cost !== null) {
+                                costDiv.style.fontSize = '8px';
+                                costDiv.style.textAlign = 'right';
+                                costDiv.innerHTML = `<strong>T:${cost.total}</strong><br>g:${cost.g} h:${cost.h}`;
+                            } else {
+                                costDiv.textContent = cost;
+                            }
+                            
+                            if (!maze.isKnown(x, y)) {
+                                costDiv.style.opacity = '0.7';
+                            }
+                            cell.appendChild(costDiv);
+                        }
+                    }
+                    grid.appendChild(cell);
+                }
+            }
+            vizArea.appendChild(grid);
+        }
+
+        function renderMazeState(pos, visited) {
+            renderMaze(); 
+            if (pos) {
+                const cell = document.getElementById(`cell-${pos.x}-${pos.y}`);
+                if (cell) cell.classList.add('cell-current');
+            }
+            if (visited) {
+                visited.forEach(key => {
+                    const [x, y] = key.split(',').map(Number);
+                    if (!pos || !(x === pos.x && y === pos.y)) {
+                         const cell = document.getElementById(`cell-${x}-${y}`);
+                         if(cell) cell.classList.add('cell-visited');
+                    }
+                });
+            }
+        }
+
+        function renderGraph() {
+            const vizArea = document.getElementById('vizArea');
+            vizArea.innerHTML = '';
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.style.position = 'absolute';
+            svg.style.width = '100%';
+            svg.style.height = '100%';
+
+            graphData.edges.forEach(([a, b]) => {
+                const nodeA = graphData.nodes[a];
+                const nodeB = graphData.nodes[b];
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', `${nodeA.x}%`);
+                line.setAttribute('y1', `${nodeA.y}%`);
+                line.setAttribute('x2', `${nodeB.x}%`);
+                line.setAttribute('y2', `${nodeB.y}%`);
+                line.setAttribute('stroke', '#fdba74');
+                line.setAttribute('stroke-width', '3');
+                svg.appendChild(line);
+            });
+            vizArea.appendChild(svg);
+
+            Object.entries(graphData.nodes).forEach(([id, pos]) => {
+                const node = document.createElement('div');
+                node.className = 'graph-node';
+                node.id = `node-${id}`;
+                node.textContent = id;
+                node.style.left = `calc(${pos.x}% - 22px)`;
+                node.style.top = `calc(${pos.y}% - 22px)`;
+                vizArea.appendChild(node);
+            });
+        }
+
+        function updateState(type, data) {
+            const panel = document.getElementById('statePanel');
+            if (type === 'graph') {
+                const queueHtml = data.queue ? `<div class="state-box">Queue: ${data.queue.map(n => `<span class="state-item">${n}</span>`).join('')}</div>` : '';
+                const visitedHtml = data.visited ? `<div class="state-box" style="margin-top:10px">Visited: ${data.visited.map(n => `<span class="state-item">${n}</span>`).join('')}</div>` : '';
+                panel.innerHTML = queueHtml + visitedHtml;
+            } else {
+                const posHtml = data.position ? `<div class="state-box">Position: ${data.position}</div>` : '';
+                const statusHtml = data.status ? `<div class="state-box" style="margin-top:10px">Status: ${data.status}</div>` : '';
+                panel.innerHTML = posHtml + statusHtml;
+            }
+        }
+
+        // --- Algorithm Implementations ---
+
+        async function runBFS() {
+            const queue = ['A'];
+            const visited = new Set(['A']);
+            const adj = {};
+            Object.keys(graphData.nodes).forEach(n => adj[n] = []);
+            graphData.edges.forEach(([a,b]) => { adj[a].push(b); adj[b].push(a); });
+            document.getElementById(`node-A`).classList.add('node-visited');
+            updateState('graph', {queue, visited: Array.from(visited)});
+            while (queue.length > 0 && !isPaused) {
+                highlightLine(6);
+                await sleep(800);
+                const current = queue.shift();
+                document.querySelectorAll('.node-current').forEach(n => n.classList.remove('node-current'));
+                document.getElementById(`node-${current}`).classList.add('node-current');
+                updateState('graph', {queue, visited: Array.from(visited)});
+                for (const neighbor of adj[current]) {
+                    if (!visited.has(neighbor)) {
+                        highlightLine(9);
+                        await sleep(800);
+                        visited.add(neighbor);
+                        queue.push(neighbor);
+                        document.getElementById(`node-${neighbor}`).classList.add('node-visited');
+                        updateState('graph', {queue, visited: Array.from(visited)});
+                    }
+                }
+            }
+            highlightLine(null);
+        }
+
+        async function runDFS() {
+            const stack = ['A'];
+            const visited = new Set();
+            const adj = {};
+            Object.keys(graphData.nodes).forEach(n => adj[n] = []);
+            graphData.edges.forEach(([a,b]) => { adj[a].push(b); adj[b].push(a); });
+            updateState('graph', {queue: stack, visited: []});
+            while (stack.length > 0 && !isPaused) {
+                highlightLine(5);
+                await sleep(800);
+                const current = stack.pop();
+                if (!visited.has(current)) {
+                    visited.add(current);
+                    document.querySelectorAll('.node-current').forEach(n => n.classList.remove('node-current'));
+                    document.getElementById(`node-${current}`).classList.add('node-current');
+                    document.getElementById(`node-${current}`).classList.add('node-visited');
+                    updateState('graph', {queue: stack, visited: Array.from(visited)});
+                    highlightLine(7);
+                    await sleep(800);
+                    for (const neighbor of adj[current]) {
+                        if (!visited.has(neighbor)) {
+                            highlightLine(9);
+                            stack.push(neighbor);
+                            updateState('graph', {queue: stack, visited: Array.from(visited)});
+                            await sleep(400);
+                        }
+                    }
+                }
+            }
+            highlightLine(null);
+        }
+
+        async function runRightWall() {
+            let pos = {...maze.start};
+            let dir = 'E';
+            const visited = new Set();
+            const dirs = {
+                'N': {dx: 0, dy: -1, right: 'E', left: 'W', back: 'S', symbol: '↑'},
+                'E': {dx: 1, dy: 0, right: 'S', left: 'N', back: 'W', symbol: '→'},
+                'S': {dx: 0, dy: 1, right: 'W', left: 'E', back: 'N', symbol: '↓'},
+                'W': {dx: -1, dy: 0, right: 'N', left: 'S', back: 'E', symbol: '←'}
+            };
+            while (!(pos.x === maze.goal.x && pos.y === maze.goal.y) && !isPaused) {
+                visited.add(`${pos.x},${pos.y}`);
+                maze.discover(pos.x, pos.y);
+                renderMazeState(pos, visited);
+                updateState('maze', { position: `(${pos.x}, ${pos.y})`, status: `Facing: ${dirs[dir].symbol} ${dir}` });
+                highlightLine(3);
+                await sleep(800);
+                const canMove = (direction) => {
+                    const d = dirs[direction];
+                    const nx = pos.x + d.dx, ny = pos.y + d.dy;
+                    return nx >= 0 && nx < 10 && ny >= 0 && ny < 9 && maze.isKnown(nx, ny) && !maze.isWall(nx, ny);
+                };
+                const rightDir = dirs[dir].right, leftDir = dirs[dir].left, backDir = dirs[dir].back;
+                if (canMove(rightDir)) { highlightLine(5); dir = rightDir; await sleep(400); } 
+                else if (canMove(dir)) { highlightLine(7); await sleep(400); } 
+                else if (canMove(leftDir)) { highlightLine(9); dir = leftDir; await sleep(400); } 
+                else { highlightLine(11); dir = backDir; await sleep(400); }
+                highlightLine(12);
+                pos.x += dirs[dir].dx;
+                pos.y += dirs[dir].dy;
+                await sleep(400);
+            }
+            if (pos.x === maze.goal.x && pos.y === maze.goal.y) { renderMazeState(pos, visited); }
+            highlightLine(null);
+        }
+
+        async function runRandom() {
+            let pos = {...maze.start};
+            const visited = new Set();
+            let steps = 0;
+            const maxSteps = 500;
+            while (!(pos.x === maze.goal.x && pos.y === maze.goal.y) && !isPaused && steps < maxSteps) {
+                visited.add(`${pos.x},${pos.y}`);
+                maze.discover(pos.x, pos.y);
+                renderMazeState(pos, visited);
+                updateState('maze', { position: `(${pos.x}, ${pos.y})`, status: `Steps: ${steps} / ${maxSteps}` });
+                highlightLine(2);
+                await sleep(600);
+                const moves = [];
+                [[0,1],[1,0],[0,-1],[-1,0]].forEach(([dx,dy]) => {
+                    const nx = pos.x + dx, ny = pos.y + dy;
+                    if (nx >= 0 && nx < 10 && ny >= 0 && ny < 9 && maze.isKnown(nx, ny) && !maze.isWall(nx, ny)) {
+                        moves.push({x: nx, y: ny});
+                    }
+                });
+                if (moves.length > 0) {
+                    highlightLine(4);
+                    await sleep(400);
+                    const choice = moves[Math.floor(Math.random() * moves.length)];
+                    pos = choice;
+                    steps++;
+                    highlightLine(5);
+                    await sleep(400);
+                } else { break; }
+            }
+            if (pos.x === maze.goal.x && pos.y === maze.goal.y) {
+                renderMazeState(pos, visited);
+                updateState('maze', { position: `(${pos.x}, ${pos.y})`, status: `Goal reached in ${steps} steps!` });
+            }
+            highlightLine(null);
+        }
+
+        async function runFloodFill() {
+            let pos = {...maze.start};
+            const visited = new Set();
+            const calculateCosts = () => {
+                maze.costs = {};
+                const queue = [{x: maze.goal.x, y: maze.goal.y, cost: 0}];
+                const seen = new Set([`${maze.goal.x},${maze.goal.y}`]);
+                maze.costs[`${maze.goal.x},${maze.goal.y}`] = 0;
+                while (queue.length > 0) {
+                    const {x, y, cost} = queue.shift();
+                    [[0,1],[1,0],[0,-1],[-1,0]].forEach(([dx,dy]) => {
+                        const nx = x + dx, ny = y + dy;
+                        const key = `${nx},${ny}`;
+                        if (!seen.has(key) && nx >= 0 && nx < 10 && ny >= 0 && ny < 9 && !(maze.isKnown(nx, ny) && maze.isWall(nx, ny))) {
+                            seen.add(key);
+                            maze.costs[key] = cost + 1;
+                            queue.push({x: nx, y: ny, cost: cost + 1});
+                        }
+                    });
+                }
+            };
+
+            while (!(pos.x === maze.goal.x && pos.y === maze.goal.y) && !isPaused) {
+                visited.add(`${pos.x},${pos.y}`);
+                
+                highlightLine(2);
+                maze.discover(pos.x, pos.y);
+                updateState('maze', { position: `(${pos.x}, ${pos.y})`, status: 'Discovering adjacent walls...' });
+                renderMazeState(pos, visited);
+                await sleep(800);
+
+                highlightLine(3);
+                calculateCosts();
+                updateState('maze', { position: `(${pos.x}, ${pos.y})`, status: 'Recalculating path with new info...' });
+                renderMazeState(pos, visited);
+                await sleep(800);
+
+                highlightLine(4);
+                let bestMove = null;
+                let bestCost = Infinity;
+                [[0,1],[1,0],[0,-1],[-1,0]].forEach(([dx,dy]) => {
+                    const nx = pos.x + dx, ny = pos.y + dy;
+                    if (maze.isKnown(nx, ny) && !maze.isWall(nx, ny)) {
+                        const cost = maze.costs[`${nx},${ny}`];
+                        if (cost !== undefined && cost < bestCost) {
+                            bestCost = cost;
+                            bestMove = {x: nx, y: ny};
+                        }
+                    }
+                });
+                
+                if (bestMove) {
+                    pos = bestMove;
+                    updateState('maze', { position: `(${pos.x}, ${pos.y})`, status: 'Moving to best neighbor...' });
+                    renderMazeState(pos, visited);
+                    await sleep(600);
+                } else {
+                    updateState('maze', { position: `(${pos.x}, ${pos.y})`, status: 'Trapped!' });
+                    break;
+                }
+            }
+            if (pos.x === maze.goal.x && pos.y === maze.goal.y) { renderMazeState(pos, visited); }
+            highlightLine(null);
+        }
+
+        async function runPlanner() {
+            let pos = {...maze.start};
+            const visitedNodes = new Set([`${pos.x},${pos.y}`]);
+            
+            const bfsOnKnownMaze = (startNode, endNode = null) => {
+                const startKey = `${startNode.x},${startNode.y}`;
+                const queue = [[startKey]];
+                const visited = new Set([startKey]);
+                const distances = {[startKey]: 0};
+
+                while (queue.length > 0) {
+                    const path = queue.shift();
+                    const key = path[path.length - 1];
+                    const [x, y] = key.split(',').map(Number);
+
+                    if (endNode && x === endNode.x && y === endNode.y) {
+                        return path; 
+                    }
+
+                    [[0,1],[1,0],[0,-1],[-1,0]].forEach(([dx,dy]) => {
+                        const nx = x + dx, ny = y + dy;
+                        const newKey = `${nx},${ny}`;
+                        if (maze.isKnown(nx, ny) && !maze.isWall(nx, ny) && !visited.has(newKey)) {
+                            visited.add(newKey);
+                            distances[newKey] = distances[key] + 1;
+                            const newPath = [...path, newKey];
+                            queue.push(newPath);
+                        }
+                    });
+                }
+                return endNode ? null : distances; 
+            };
+
+            while (!(pos.x === maze.goal.x && pos.y === maze.goal.y) && !isPaused) {
+                highlightLine(3);
+                maze.discover(pos.x, pos.y);
+                updateState('maze', { position: `(${pos.x}, ${pos.y})`, status: 'Updating map...' });
+                renderMazeState(pos, visitedNodes);
+                await sleep(500);
+
+                highlightLine(4);
+                let bestTargetNode = null;
+                let minCost = Infinity;
+                maze.costs = {}; // Clear old costs for visualization
+
+                const travelCosts = bfsOnKnownMaze(pos);
+
+                for (const key of maze.known) {
+                    const [x, y] = key.split(',').map(Number);
+                    if (maze.isWall(x, y)) continue;
+
+                    const goalDist = Math.abs(x - maze.goal.x) + Math.abs(y - maze.goal.y);
+                    
+                    if (visitedNodes.has(key)) continue;
+                    
+                    const travelCost = travelCosts[key];
+                    if (travelCost === undefined) continue;
+
+                    let bonus = 0;
+                    [[0,1],[1,0],[0,-1],[-1,0]].forEach(([dx,dy]) => {
+                        if (!maze.isKnown(x + dx, y + dy)) {
+                            bonus = -5;
+                        }
+                    });
+
+                    const totalCost = goalDist + travelCost + bonus;
+                    
+                    // UPDATED: Store a detailed object for visualization
+                    maze.costs[key] = { total: totalCost, g: travelCost, h: goalDist };
+
+                    if (totalCost < minCost) {
+                        minCost = totalCost;
+                        bestTargetNode = {x, y};
+                    }
+                }
+                updateState('maze', { position: `(${pos.x}, ${pos.y})`, status: 'Choosing best target...' });
+                renderMazeState(pos, visitedNodes);
+                await sleep(800);
+                
+                if (!bestTargetNode) {
+                     updateState('maze', { position: `(${pos.x}, ${pos.y})`, status: 'No path found!' });
+                     break;
+                }
+
+                highlightLine(9);
+                const pathToTarget = bfsOnKnownMaze(pos, bestTargetNode);
+                updateState('maze', { position: `(${pos.x}, ${pos.y})`, status: `Planning path to (${bestTargetNode.x}, ${bestTargetNode.y})` });
+                await sleep(800);
+
+                highlightLine(10);
+                for (let i = 1; i < pathToTarget.length; i++) {
+                    const [x, y] = pathToTarget[i].split(',').map(Number);
+                    pos = {x, y};
+                    visitedNodes.add(pathToTarget[i]);
+                    renderMazeState(pos, visitedNodes);
+                    await sleep(250);
+                }
+                
+                updateState('maze', { position: `(${pos.x}, ${pos.y})`, status: 'Reached target. Re-evaluating...' });
+                await sleep(500);
+            }
+            if (pos.x === maze.goal.x && pos.y === maze.goal.y) { renderMazeState(pos, visitedNodes); }
+            highlightLine(null);
+        }
+
+        // --- Setup and Control ---
+
+        function setupAlgorithm(algo) {
+            currentAlgo = algo;
+            const config = algorithms[algo];
+            document.getElementById('vizTitle').textContent = config.name;
+            const pseudocode = document.getElementById('pseudocode');
+            pseudocode.innerHTML = config.pseudocode.map(line => `<div class="code-line">${line}</div>`).join('');
+            document.getElementById('statePanel').innerHTML = '<div class="state-box">Ready</div>';
+            
+            if (config.type === 'graph') {
+                renderGraph();
+            } else {
+                maze.reset();
+                if (algo === 'floodfill' || algo === 'planner') {
+                    maze.known.add(`${maze.goal.x},${maze.goal.y}`);
+                }
+                renderMaze();
+            }
+        }
+
+        async function start() {
+            if (isRunning) return;
+            isRunning = true;
+            isPaused = false;
+            document.getElementById('startBtn').disabled = true;
+            try {
+                switch (currentAlgo) {
+                    case 'bfs': await runBFS(); break;
+                    case 'dfs': await runDFS(); break;
+                    case 'rightwall': await runRightWall(); break;
+                    case 'random': await runRandom(); break;
+                    case 'floodfill': await runFloodFill(); break;
+                    case 'planner': await runPlanner(); break;
+                }
+            } catch (e) { console.error(e); }
+            isRunning = false;
+            document.getElementById('startBtn').disabled = false;
+        }
+
+        function step() {
+            if (!isRunning) {
+                stepMode = true;
+                start();
+            } else if (stepResolver) {
+                stepResolver();
+                stepResolver = null;
+            }
+        }
+
+        function reset() {
+            isPaused = true;
+            if (stepResolver) {
+                stepResolver();
+                stepResolver = null;
+            }
+            isRunning = false;
+            stepMode = false;
+            document.getElementById('startBtn').disabled = false;
+            setupAlgorithm(currentAlgo);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    if (isRunning) return;
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    setupAlgorithm(tab.dataset.algo);
+                });
+            });
+            document.getElementById('startBtn').addEventListener('click', () => {
+                stepMode = false;
+                start();
+            });
+            document.getElementById('stepBtn').addEventListener('click', step);
+            document.getElementById('resetBtn').addEventListener('click', reset);
+            setupAlgorithm('bfs');
+        });
+    </script>
+</body>
+</html>
