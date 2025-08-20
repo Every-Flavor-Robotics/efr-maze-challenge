@@ -335,10 +335,12 @@
         <div class="tabs" id="tabs">
             <button class="tab active" data-algo="bfs">BFS</button>
             <button class="tab" data-algo="dfs">DFS</button>
+            <button class="tab" data-algo="bfsmaze">BFS (Maze)</button>
+            <button class="tab" data-algo="dfsmaze">DFS (Maze)</button>
             <button class="tab" data-algo="rightwall">Right Wall</button>
             <button class="tab" data-algo="random">Random</button>
             <button class="tab" data-algo="floodfill">Flood Fill</button>
-            <button class="tab" data-algo="planner">Mrinal Planner</button>
+            <button class="tab" data-algo="planner">Exploration Planner</button>
         </div>
 
         <div class="main-grid">
@@ -453,15 +455,14 @@
                     'FloodFill(Maze M):',
                     '  While not at goal:',
                     '    Discover walls',
-                    '    Calculate distances to goal',
-                    '    Move to lowest distance neighbor'
-                ]
+                    '    Run BFS outward from the goal to compute distances',
+                    '    Move to neighbor with lowest distance']
             },
             planner: {
-                name: 'Mrinal Planner',
+                name: 'Exploration Planner',
                 type: 'maze',
                 pseudocode: [
-                    'MrinalPlanner(Start s, Goal f):',
+                    'ExplorationPlanner(Start s, Goal f):',
                     '  Create Graph G of known maze',
                     '  while not at goal:',
                     '    Update G with new discoveries',
@@ -474,6 +475,41 @@
                     '    s = t'
                 ]
             }
+            ,
+            bfsmaze: {
+                name: 'BFS (Maze)',
+                type: 'maze',
+                pseudocode: [
+                    'BFS_Maze(Maze M):',
+                    '  Create Queue Q',
+                    '  Create Visited Set V',
+                    '  Enqueue start',
+                    '  While Q not empty and not at goal:',
+                    '    current = Q.dequeue()',
+                    '    Discover walls around current',
+                    '    For each neighbor in NESW:',
+                    '      If in-bounds and not wall and not visited:',
+                    '        Mark visited and enqueue'
+                ]
+            },
+            dfsmaze: {
+                name: 'DFS (Maze)',
+                type: 'maze',
+                pseudocode: [
+                    'DFS_Maze(Maze M):',
+                    '  Create Stack S',
+                    '  Create Visited Set V',
+                    '  Push start',
+                    '  While S not empty and not at goal:',
+                    '    current = S.pop()',
+                    '    If current not in V:',
+                    '      Mark visited',
+                    '      Discover walls around current',
+                    '      For each neighbor in NESW:',
+                    '        If in-bounds and not wall: push neighbor'
+                ]
+            }
+
         };
 
         // Graph data
@@ -499,7 +535,7 @@
                     '##########',
                     '#S       #',
                     '### #### #',
-                    '#     # #',
+                    '#     # ##',
                     '# ### # ##',
                     '#   #    #',
                     '### ######',
@@ -990,7 +1026,95 @@
             highlightLine(null);
         }
 
-        // --- Setup and Control ---
+        
+        async function runBFSMaze() {
+            const startPos = { ...maze.start };
+            const visited = new Set();
+            const visitedCells = new Set();
+            const queue = [startPos];
+            renderMazeState(startPos, visitedCells);
+            updateState('maze', { position: `(${startPos.x}, ${startPos.y})`, status: `Queue: ${queue.length}` });
+            while (queue.length > 0 && !isPaused) {
+                highlightLine(5);
+                await sleep(500);
+                const current = queue.shift();
+                const key = `${current.x},${current.y}`;
+                if (visited.has(key)) { continue; }
+                visited.add(key);
+                visitedCells.add(key);
+
+                if (current.x === maze.goal.x && current.y === maze.goal.y) {
+                    renderMazeState(current, visitedCells);
+                    updateState('maze', { position: `(${current.x}, ${current.y})`, status: 'Goal reached!' });
+                    break;
+                }
+
+                highlightLine(6);
+                maze.discover(current.x, current.y);
+                renderMazeState(current, visitedCells);
+                updateState('maze', { position: `(${current.x}, ${current.y})`, status: `Queue: ${queue.length}` });
+                await sleep(400);
+
+                highlightLine(7);
+                const dirs = [[0,1],[1,0],[0,-1],[-1,0]];
+                for (const [dx,dy] of dirs) {
+                    const nx = current.x + dx, ny = current.y + dy;
+                    const nkey = `${nx},${ny}`;
+                    if (nx >= 0 && nx < 10 && ny >= 0 && ny < 9 && !maze.isWall(nx, ny) && !visited.has(nkey)) {
+                        queue.push({ x: nx, y: ny });
+                    }
+                }
+                updateState('maze', { position: `(${current.x}, ${current.y})`, status: `Queue: ${queue.length}` });
+                await sleep(200);
+            }
+            highlightLine(null);
+        }
+
+        async function runDFSMaze() {
+            const startPos = { ...maze.start };
+            const visited = new Set();
+            const visitedCells = new Set();
+            const stack = [startPos];
+            renderMazeState(startPos, visitedCells);
+            updateState('maze', { position: `(${startPos.x}, ${startPos.y})`, status: `Stack: ${stack.length}` });
+            while (stack.length > 0 && !isPaused) {
+                highlightLine(5);
+                await sleep(500);
+                const current = stack.pop();
+                const key = `${current.x},${current.y}`;
+                if (visited.has(key)) { continue; }
+
+                visited.add(key);
+                visitedCells.add(key);
+
+                if (current.x === maze.goal.x && current.y === maze.goal.y) {
+                    renderMazeState(current, visitedCells);
+                    updateState('maze', { position: `(${current.x}, ${current.y})`, status: 'Goal reached!' });
+                    break;
+                }
+
+                highlightLine(8);
+                maze.discover(current.x, current.y);
+                renderMazeState(current, visitedCells);
+                updateState('maze', { position: `(${current.x}, ${current.y})`, status: `Stack: ${stack.length}` });
+                await sleep(400);
+
+                highlightLine(9);
+                const dirs = [[0,1],[1,0],[0,-1],[-1,0]];
+                // Push in reverse order if you want NESW visitation; keeping NESW push order means W gets popped first. We'll keep NESW then rely on LIFO.
+                for (let i = dirs.length - 1; i >= 0; i--) {
+                    const [dx,dy] = dirs[i];
+                    const nx = current.x + dx, ny = current.y + dy;
+                    if (nx >= 0 && nx < 10 && ny >= 0 && ny < 9 && !maze.isWall(nx, ny)) {
+                        stack.push({ x: nx, y: ny });
+                    }
+                }
+                updateState('maze', { position: `(${current.x}, ${current.y})`, status: `Stack: ${stack.length}` });
+                await sleep(200);
+            }
+            highlightLine(null);
+        }
+// --- Setup and Control ---
 
         function setupAlgorithm(algo) {
             currentAlgo = algo;
@@ -1024,6 +1148,8 @@
                     case 'random': await runRandom(); break;
                     case 'floodfill': await runFloodFill(); break;
                     case 'planner': await runPlanner(); break;
+                    case 'bfsmaze': await runBFSMaze(); break;
+                    case 'dfsmaze': await runDFSMaze(); break;
                 }
             } catch (e) { console.error(e); }
             isRunning = false;
